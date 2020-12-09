@@ -1,10 +1,11 @@
-package co.thebabels.schedulecalendarview
+package co.thebabels.schedulecalendarview.view
 
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
 import androidx.core.content.ContextCompat
+import co.thebabels.schedulecalendarview.R
 
 
 class TimeScaleView @JvmOverloads constructor(
@@ -16,7 +17,7 @@ class TimeScaleView @JvmOverloads constructor(
     companion object {
         private const val TAG = "TimeScaleView"
         val timeScaleRows = listOf<String>(
-            "0:00",
+            "",
             "1:00",
             "2:00",
             "3:00",
@@ -44,9 +45,8 @@ class TimeScaleView @JvmOverloads constructor(
     }
 
     private var paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private var minWidth = 400
     private var rowHeight: Float = 200f
-    val textBounds = Rect(0, 0, 0, 0)
+    private val textBounds = Rect(0, 0, 0, 0)
 
     init {
         paint.color = ContextCompat.getColor(context, R.color.grid_line)
@@ -55,12 +55,13 @@ class TimeScaleView @JvmOverloads constructor(
         timeScaleRows.last().let { s ->
             paint.getTextBounds(s, 0, s.length, textBounds)
         }
+        elevation = 4f
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         setMeasuredDimension(
-            getDefaultSize(minWidth, widthMeasureSpec),
+            getDefaultSize(0, widthMeasureSpec),
             rowHeight.toInt() * (timeScaleRows.size + 1)
         )
     }
@@ -78,5 +79,9 @@ class TimeScaleView @JvmOverloads constructor(
                 paint
             )
         }
+    }
+
+    override fun offsetLeftAndRight(offset: Int) {
+        // Do nothing
     }
 }

@@ -15,7 +15,7 @@ class ScheduleCalendarView @JvmOverloads constructor(
 ) : ViewGroup(context, attrs, defStyleAttr) {
 
     companion object {
-        const val ROWS_COUNT = 24
+        const val ROWS_COUNT = 25
     }
 
     private var paint = Paint(Paint.ANTI_ALIAS_FLAG)

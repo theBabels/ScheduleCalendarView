@@ -3,42 +3,60 @@ package co.thebabels.schedulecalendarview
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import co.thebabels.schedulecalendarview.view.DateLabelView
+import co.thebabels.schedulecalendarview.view.DateLabelViewHolder
+import co.thebabels.schedulecalendarview.view.TimeScaleView
+import co.thebabels.schedulecalendarview.view.TimeScaleViewHolder
 import java.lang.IllegalArgumentException
 
 
-abstract class ScheduleCalendarAdapter<I : ScheduleItem>() :
-    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+abstract class ScheduleCalendarAdapter() :
+    RecyclerView.Adapter<ScheduleCalendarAdapter.ViewHolder>() {
 
     companion object {
         const val ViewTypeTimeScale = 100
-        const val ViewTypeSchedule = 101
+        const val ViewTypeDateLabel = 101
+        const val ViewTypeSchedule = 102
     }
 
-    private val items: MutableList<I> = mutableListOf()
+    private val items: MutableList<ScheduleItem> = mutableListOf()
 
-    abstract fun createScheduleViewHolder(parent: ViewGroup): ViewHolder<I>
+    abstract fun createScheduleViewHolder(parent: ViewGroup): ViewHolder
 
-    fun addItems(vararg items: I) {
-        items.forEach {
-            this.items.add(it)
-        }
-        this.items.sort()
+    /**
+     * Returns a [ScheduleItem] at given [position].
+     *
+     * @param position adapter position
+     */
+    fun getItem(position: Int): ScheduleItem? {
+        return items.getOrNull(position - 1)
     }
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        when (position) {
-            0 -> Unit
-            else -> {
-//                (holder as ViewHolder<I>).bind(items[position])
-            }
-        }
+    fun addItems(vararg items: ScheduleItem) {
+        this.items.addAll(items.toList().sort())
+        // TODO specific position
+        notifyDataSetChanged()
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): ViewHolder {
         return when (viewType) {
             ViewTypeTimeScale -> TimeScaleViewHolder(TimeScaleView(parent.context))
             ViewTypeSchedule -> createScheduleViewHolder(parent)
+            ViewTypeDateLabel -> DateLabelViewHolder(DateLabelView(parent.context))
             else -> throw IllegalArgumentException("unknown view type: ${viewType}")
+        }
+    }
+
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        when (position) {
+            0 -> Unit
+            else -> {
+                holder.bind(items[position - 1])
+            }
         }
     }
 
@@ -50,15 +68,19 @@ abstract class ScheduleCalendarAdapter<I : ScheduleItem>() :
     override fun getItemViewType(position: Int): Int {
         return when (position) {
             0 -> ViewTypeTimeScale
-            else -> ViewTypeSchedule
+            else -> {
+                if (items.getOrNull(position - 1) is DateScheduleItem) {
+                    ViewTypeDateLabel
+                } else {
+                    ViewTypeSchedule
+                }
+            }
         }
     }
 
-    abstract class ViewHolder<I : ScheduleItem>(itemView: View) :
+    abstract class ViewHolder(itemView: View) :
         RecyclerView.ViewHolder(itemView) {
 
-        abstract fun bind(item: I)
+        abstract fun bind(item: ScheduleItem)
     }
-
-    class TimeScaleViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {}
 }

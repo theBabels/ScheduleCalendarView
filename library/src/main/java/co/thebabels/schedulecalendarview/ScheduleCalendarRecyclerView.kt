@@ -22,10 +22,13 @@ class ScheduleCalendarRecyclerView @JvmOverloads constructor(
     }
 
     private var scrolledY = 0
+    private var scrolledX = 0
 
     private var paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private var columns: Int = 7
     private var rowHeight: Float = 200f
+    private var dateLabelHeight = 200
+    private var timeScaleWidth: Int = 200
 
     init {
         paint.color = ContextCompat.getColor(context, R.color.grid_line)
@@ -34,22 +37,26 @@ class ScheduleCalendarRecyclerView @JvmOverloads constructor(
     override fun setLayoutManager(layout: LayoutManager?) {
         super.setLayoutManager(layout)
         if (layout is ScheduleCalendarLayoutManager) {
-            this.rowHeight = layout.rowHeight
+            layout.rowHeight = this.rowHeight
+            layout.dateLabelHeight = this.dateLabelHeight
+            layout.timeScaleWidth = this.timeScaleWidth
         }
     }
 
     override fun onDraw(c: Canvas?) {
         super.onDraw(c)
         Log.println(Log.DEBUG, TAG, "onDraw='${scrolledY}', '${scrollX}'")
+
         val offsetY = -scrolledY
         for (i in 0 until ScheduleCalendarView.ROWS_COUNT) {
             val y = offsetY + rowHeight * i
             c?.drawLine(0f, y, width.toFloat(), y, paint)
         }
 
-        val rowWidth = width / columns.toFloat()
-        for (i in 0 until columns) {
-            val x = rowWidth * i.toFloat()
+        val rowWidth = (width - timeScaleWidth) / columns
+        val offsetX = this.timeScaleWidth - (scrolledX % rowWidth)
+        for (i in 0 until columns + 1) {
+            val x = offsetX + rowWidth * i.toFloat()
             c?.drawLine(x, 0f, x, height.toFloat(), paint)
         }
     }
@@ -58,7 +65,6 @@ class ScheduleCalendarRecyclerView @JvmOverloads constructor(
         super.onScrolled(dx, dy)
         Log.d(TAG, "onScrolled: ${dx}, ${dy}, ${scrollY}")
         scrolledY += dy
+        scrolledX += dx
     }
-
-
 }

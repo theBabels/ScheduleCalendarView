@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="grid_line">#AAAAAA</color>
+    <color name="date_label_date_text">#111111</color>
+    <color name="date_label_day_of_week_text">#AAAAAA</color>
 </resources>

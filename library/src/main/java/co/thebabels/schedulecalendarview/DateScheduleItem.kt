@@ -2,6 +2,9 @@ package co.thebabels.schedulecalendarview
 
 import java.util.*
 
+/**
+ * [ScheduleItem] of a date label.
+ */
 data class DateScheduleItem(private val cal: Calendar) : ScheduleItem {
 
     companion object {
@@ -60,5 +63,7 @@ data class DateScheduleItem(private val cal: Calendar) : ScheduleItem {
         return "${cal.get(Calendar.DATE)}"
     }
 
-
+    fun dayOfWeekString(locale: Locale = Locale.getDefault()): String {
+        return cal.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.SHORT, locale).orEmpty()
+    }
 }

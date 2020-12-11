@@ -1,5 +1,6 @@
 package co.thebabels.schedulecalendarview.app
 
+import android.app.Activity
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import androidx.appcompat.app.AppCompatActivity
@@ -23,8 +24,12 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val recyclerView: RecyclerView = findViewById(R.id.recycler_view)
+        val layoutListener = LayoutListener(this)
         recyclerView.layoutManager =
-            ScheduleCalendarLayoutManager(this).apply { setDateLookUp(DefaultDateLookUp(adapter)) }
+            ScheduleCalendarLayoutManager(this).apply {
+                setDateLookUp(DefaultDateLookUp(adapter))
+                setListener(layoutListener)
+            }
         recyclerView.adapter = adapter
 //        val snapHelper = PagerSnapHelper()
 //        snapHelper.attachToRecyclerView(recyclerView)
@@ -37,7 +42,7 @@ class MainActivity : AppCompatActivity() {
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }
-        val days = DateScheduleItem.firstDayOfWeek().nextDays(30, true)
+        val days = DateScheduleItem.firstDayOfWeek().nextDays(60, true)
         Log.d("DEBUG", "${days.map { it.dateString() }}")
         adapter.addItems(
             *days.toTypedArray(),
@@ -94,6 +99,14 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private class LayoutListener(val a: Activity) : ScheduleCalendarLayoutManager.Listener {
+        override fun onFirstItemChanged(position: Int, date: Date) {
+            val monthTextView: TextView = a.findViewById(R.id.month_text)
+            monthTextView.text = Calendar.getInstance().apply { time = date }
+                .getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault())
         }
     }
 }

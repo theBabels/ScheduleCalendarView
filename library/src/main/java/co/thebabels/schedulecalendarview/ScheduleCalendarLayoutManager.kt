@@ -14,7 +14,17 @@ import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
+/**
+ * A [RecyclerView.LayoutManager] implementations that lays out schedule items in weekly calendar.
+ */
 class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManager() {
+
+    /**
+     * Listener for layout event.
+     */
+    interface Listener {
+        fun onFirstItemChanged(position: Int, date: Date)
+    }
 
     companion object {
         const val TAG = "SCLayoutManager"
@@ -27,11 +37,32 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     var dateLabelHeight = 0
     var timeScaleWidth = 0
     private lateinit var dateLookUp: DateLookUp
+    private var listener: Listener? = null
     private var firstVisibleItemPosition: Int = 0
     private var lastVisibleItemPosition: Int = 0
 
+    /**
+     * Set [DateLookUp].
+     */
     fun setDateLookUp(dateLookUp: DateLookUp) {
         this.dateLookUp = dateLookUp
+    }
+
+    /**
+     * Set [Listener].
+     */
+    fun setListener(listener: Listener?) {
+        this.listener = listener
+    }
+
+    /**
+     * Returns a [ScheduleItem.start] of first visible item.
+     */
+    fun getFirstItemDate(): Date? {
+        if (firstVisibleItemPosition < FIX_VIEW_OFFSET) {
+            return null
+        }
+        return dateLookUp.lookUpStart(firstVisibleItemPosition)
     }
 
     override fun generateDefaultLayoutParams(): RecyclerView.LayoutParams {
@@ -68,6 +99,9 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
                 if (right > width - paddingRight && dateLookUp.isDateLabel(i + 1)) {
                     break
                 }
+            }
+            getFirstItemDate()?.let {
+                listener?.onFirstItemChanged(firstVisibleItemPosition, it)
             }
         }
     }
@@ -294,6 +328,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         while (firstVisibleItemPosition > FIX_VIEW_OFFSET) {
             val right = addChild(firstVisibleItemPosition - 1, recycler, getFirstDateLabel())
             firstVisibleItemPosition--
+            getFirstItemDate()?.let { listener?.onFirstItemChanged(firstVisibleItemPosition, it) }
             if (right - rowWidth() <= paddingLeft && dateLookUp.isDateLabel(firstVisibleItemPosition)) {
                 break
             }
@@ -324,6 +359,9 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             if (right - scrollAmount < paddingLeft) {
                 removeAndRecycleViewAt(FIX_VIEW_OFFSET, recycler)
                 firstVisibleItemPosition++
+                getFirstItemDate()?.let {
+                    listener?.onFirstItemChanged(firstVisibleItemPosition, it)
+                }
             } else {
                 break
             }

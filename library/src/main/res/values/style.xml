@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="DateLabel">
+        <item name="backgroundColor">?attr/colorSurface</item>
+        <item name="dateTextColor">@color/date_label_date_text</item>
+        <item name="dayOfWeekTextColor">@color/date_label_day_of_week_text</item>
+        <item name="todayColor">?attr/colorPrimary</item>
+        <item name="onTodayColor">?attr/colorOnPrimary</item>
+        <item name="dateTextSize">16sp</item>
+        <item name="dayOfWeekTextSize">12sp</item>
+        <item name="todayCirclePadding">2dp</item>
+    </style>
+</resources>

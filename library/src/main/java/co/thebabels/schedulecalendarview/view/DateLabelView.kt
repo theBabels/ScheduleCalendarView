@@ -5,7 +5,6 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
-import androidx.core.content.ContextCompat
 import co.thebabels.schedulecalendarview.DateScheduleItem
 import co.thebabels.schedulecalendarview.R
 import co.thebabels.schedulecalendarview.extention.isToday
@@ -16,32 +15,50 @@ import co.thebabels.schedulecalendarview.extention.isToday
 class DateLabelView @JvmOverloads constructor(
     context: Context,
     attributeSet: AttributeSet? = null,
-    defStyleAttr: Int = 0,
+    defStyleAttr: Int = R.attr.dateLabelView,
 ) : View(context, attributeSet, defStyleAttr) {
 
     var date: DateScheduleItem? = null
     var isToday: Boolean = false
-    private var paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private var paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER }
     private val textBounds = Rect(0, 0, 0, 0)
-    private var bgColor = Color.WHITE
-    private var dateTextSize: Int = 0
-    private var dateTextColor = ContextCompat.getColor(context, R.color.date_label_date_text)
+    private var bgColor = 0
+    private var dateTextSize = 0f
+    private var dateTextColor = 0
     private var dateTypeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-    private var dayOfWeekTextSize: Int = 0
-    private var dayOfWeekTextColor =
-        ContextCompat.getColor(context, R.color.date_label_day_of_week_text)
+    private var dayOfWeekTextSize = 0f
+    private var dayOfWeekTextColor = 0
     private var dayOfWekTypeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
-    private var todayColor = ContextCompat.getColor(context, R.color.date_label_today)
-    private var onTodayColor = ContextCompat.getColor(context, R.color.date_label_on_today)
-    private var todayCirclePadding = resources.getDimension(R.dimen.date_label_today_circle_padding)
+    private var todayColor = 0
+    private var onTodayColor = 0
+    private var todayCirclePadding = 0f
 
     init {
         elevation = 8f
-        paint.color = ContextCompat.getColor(context, R.color.grid_line)
-        paint.textAlign = Paint.Align.CENTER
-        dateTextSize = resources.getDimensionPixelSize(R.dimen.date_label_date_text_size)
-        dayOfWeekTextSize =
-            resources.getDimensionPixelSize(R.dimen.date_label_day_of_week_text_size)
+
+        // set up attrs
+        context.theme.obtainStyledAttributes(
+            attributeSet,
+            R.styleable.DateLabelView,
+            defStyleAttr,
+            R.style.DateLabel,
+        ).apply {
+            try {
+                // colors
+                bgColor = getColor(R.styleable.DateLabelView_backgroundColor, 0)
+                dateTextColor = getColor(R.styleable.DateLabelView_dateTextColor, 0)
+                dayOfWeekTextColor = getColor(R.styleable.DateLabelView_dayOfWeekTextColor, 0)
+                todayColor = getColor(R.styleable.DateLabelView_todayColor, 0)
+                onTodayColor = getColor(R.styleable.DateLabelView_onTodayColor, 0)
+                // text size
+                dateTextSize = getDimension(R.styleable.DateLabelView_dateTextSize, 0f)
+                dayOfWeekTextSize = getDimension(R.styleable.DateLabelView_dayOfWeekTextSize, 0f)
+                // others
+                todayCirclePadding = getDimension(R.styleable.DateLabelView_todayCirclePadding, 0f)
+            } finally {
+                recycle()
+            }
+        }
     }
 
     /**

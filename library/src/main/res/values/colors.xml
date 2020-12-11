@@ -3,6 +3,4 @@
     <color name="grid_line">#AAAAAA</color>
     <color name="date_label_date_text">#111111</color>
     <color name="date_label_day_of_week_text">#AAAAAA</color>
-    <color name="date_label_today">#3388FF</color>
-    <color name="date_label_on_today">#FFFFFF</color>
 </resources>

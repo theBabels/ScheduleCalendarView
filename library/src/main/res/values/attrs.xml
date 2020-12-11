@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="DateLabelView">
+        <attr name="backgroundColor" format="color|reference" />
+        <attr name="dayOfWeekTextColor" format="color|reference" />
+        <attr name="dateTextColor" format="color|reference" />
+        <attr name="todayColor" format="color|reference" />
+        <attr name="onTodayColor" format="color|reference" />
+        <attr name="dateTextSize" format="dimension|reference" />
+        <attr name="dayOfWeekTextSize" format="dimension|reference" />
+        <attr name="todayCirclePadding" format="dimension|reference" />
+    </declare-styleable>
+    <attr name="dateLabelView" format="reference" />
+</resources>

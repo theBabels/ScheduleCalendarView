@@ -35,3 +35,13 @@ fun Date.hourOfDay(): Float {
         cal.get(Calendar.HOUR_OF_DAY) + (cal.get(Calendar.MINUTE).toFloat() / 60)
     }
 }
+
+/**
+ * Returns true if this [Date] is same day with given date as [now].
+ */
+fun Date.isToday(now: Date = Date()): Boolean {
+    val c = this.toCalendar()
+    val nc = now.toCalendar()
+    return c.get(Calendar.YEAR) == nc.get(Calendar.YEAR)
+            && c.get(Calendar.DAY_OF_YEAR) == nc.get(Calendar.DAY_OF_YEAR)
+}

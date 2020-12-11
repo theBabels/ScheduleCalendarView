@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="date_label_date_text_size">16dp</dimen>
-    <dimen name="date_label_day_of_week_text_size">12dp</dimen>
+    <dimen name="date_label_date_text_size">16sp</dimen>
+    <dimen name="date_label_day_of_week_text_size">12sp</dimen>
+    <dimen name="date_label_today_circle_padding">2dp</dimen>
 </resources>

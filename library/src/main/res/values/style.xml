@@ -11,4 +11,10 @@
         <item name="dayOfWeekTextSize">12sp</item>
         <item name="todayCirclePadding">2dp</item>
     </style>
+
+    <style name="TimeScale">
+        <item name="backgroundColor">?attr/colorSurface</item>
+        <item name="textColor">@color/grid_line</item>
+        <item name="textSize">14sp</item>
+    </style>
 </resources>

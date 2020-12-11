@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="DateLabelView">
+    <declare-styleable name="ScheduleCalendarViewBase">
         <attr name="backgroundColor" format="color|reference" />
+        <attr name="textColor" format="color|reference" />
+        <attr name="textSize" format="dimension|reference" />
+    </declare-styleable>
+    <declare-styleable name="DateLabelView" parent="ScheduleCalendarViewBase">
         <attr name="dayOfWeekTextColor" format="color|reference" />
         <attr name="dateTextColor" format="color|reference" />
         <attr name="todayColor" format="color|reference" />
@@ -10,5 +14,7 @@
         <attr name="dayOfWeekTextSize" format="dimension|reference" />
         <attr name="todayCirclePadding" format="dimension|reference" />
     </declare-styleable>
+    <declare-styleable name="TimeScaleView" parent="ScheduleCalendarViewBase" />
     <attr name="dateLabelView" format="reference" />
+    <attr name="timeScaleView" format="reference" />
 </resources>

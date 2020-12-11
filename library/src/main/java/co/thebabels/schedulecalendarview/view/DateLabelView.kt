@@ -13,9 +13,9 @@ import co.thebabels.schedulecalendarview.extention.isToday
  * Date label view to display in calendar header.
  */
 class DateLabelView @JvmOverloads constructor(
-    context: Context,
-    attributeSet: AttributeSet? = null,
-    defStyleAttr: Int = R.attr.dateLabelView,
+        context: Context,
+        attributeSet: AttributeSet? = null,
+        defStyleAttr: Int = R.attr.dateLabelView,
 ) : View(context, attributeSet, defStyleAttr) {
 
     var date: DateScheduleItem? = null
@@ -37,15 +37,29 @@ class DateLabelView @JvmOverloads constructor(
         elevation = 8f
 
         // set up attrs
+        // common attributes
         context.theme.obtainStyledAttributes(
-            attributeSet,
-            R.styleable.DateLabelView,
-            defStyleAttr,
-            R.style.DateLabel,
+                attributeSet,
+                R.styleable.ScheduleCalendarViewBase,
+                defStyleAttr,
+                R.style.DateLabel,
         ).apply {
             try {
                 // colors
-                bgColor = getColor(R.styleable.DateLabelView_backgroundColor, 0)
+                bgColor = getColor(R.styleable.ScheduleCalendarViewBase_backgroundColor, 0)
+            } finally {
+                recycle()
+            }
+        }
+        // specific attributes
+        context.theme.obtainStyledAttributes(
+                attributeSet,
+                R.styleable.DateLabelView,
+                defStyleAttr,
+                R.style.DateLabel,
+        ).apply {
+            try {
+                // colors
                 dateTextColor = getColor(R.styleable.DateLabelView_dateTextColor, 0)
                 dayOfWeekTextColor = getColor(R.styleable.DateLabelView_dayOfWeekTextColor, 0)
                 todayColor = getColor(R.styleable.DateLabelView_todayColor, 0)
@@ -81,10 +95,10 @@ class DateLabelView @JvmOverloads constructor(
         paint.getTextBounds(dayOfWeekText, 0, dayOfWeekText.length, textBounds)
         Log.d("HOGE", "${textBounds.bottom}, ${textBounds.top}")
         canvas?.drawText(
-            dayOfWeekText,
-            width / 2f,
-            (textBounds.bottom - textBounds.top).toFloat() + paddingTop,
-            paint
+                dayOfWeekText,
+                width / 2f,
+                (textBounds.bottom - textBounds.top).toFloat() + paddingTop,
+                paint
         )
 
         val offsetY = (textBounds.bottom - textBounds.top).toFloat() + paddingTop
@@ -98,19 +112,19 @@ class DateLabelView @JvmOverloads constructor(
         if (isToday) {
             paint.color = todayColor
             canvas?.drawCircle(
-                width / 2f,
-                offsetY + (height - offsetY) / 2f,
-                (textBounds.bottom - textBounds.top).toFloat() + todayCirclePadding * 2,
-                paint
+                    width / 2f,
+                    offsetY + (height - offsetY) / 2f,
+                    (textBounds.bottom - textBounds.top).toFloat() + todayCirclePadding * 2,
+                    paint
             )
         }
         // write date text
         paint.color = if (isToday) onTodayColor else dateTextColor
         canvas?.drawText(
-            dateText,
-            width / 2f,
-            offsetY + (height - offsetY) / 2f + (textBounds.bottom - textBounds.top) / 2,
-            paint
+                dateText,
+                width / 2f,
+                offsetY + (height - offsetY) / 2f + (textBounds.bottom - textBounds.top) / 2,
+                paint
         )
     }
 

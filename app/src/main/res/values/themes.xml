@@ -13,9 +13,14 @@
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
         <item name="dateLabelView">@style/AppWidget.DateLabel</item>
+        <item name="timeScaleView">@style/AppWidget.TimeScale</item>
     </style>
 
     <style name="AppWidget.DateLabel" parent="DateLabel">
+        <item name="backgroundColor">?attr/colorSurface</item>
+    </style>
 
+    <style name="AppWidget.TimeScale" parent="TimeScale">
+        <item name="backgroundColor">?attr/colorSurface</item>
     </style>
 </resources>

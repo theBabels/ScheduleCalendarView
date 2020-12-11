@@ -5,6 +5,7 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
 import co.thebabels.schedulecalendarview.R
+import co.thebabels.schedulecalendarview.ScheduleCalendarLayoutManager
 
 /**
  * View displaying the time scale.
@@ -19,7 +20,6 @@ class TimeScaleView @JvmOverloads constructor(
     companion object {
         private const val TAG = "TimeScaleView"
         val timeScaleRows = listOf<String>(
-                "",
                 "1:00",
                 "2:00",
                 "3:00",
@@ -47,14 +47,13 @@ class TimeScaleView @JvmOverloads constructor(
     }
 
     private var paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.RIGHT }
-    private var rowHeight: Float = 200f
     private val textBounds = Rect(0, 0, 0, 0)
-    private var bgColor = Color.WHITE
+    private var rowHeight = 0f
+    private var bgColor = 0
 
     init {
         elevation = 4f
 
-        // set up attrs
         // common attributes
         context.theme.obtainStyledAttributes(
                 attributeSet,
@@ -79,8 +78,12 @@ class TimeScaleView @JvmOverloads constructor(
         }
     }
 
+
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        rowHeight = layoutParams?.let {
+            if (it is ScheduleCalendarLayoutManager.LayoutParams) it.rowHeight else 0f
+        } ?: 0f
         setMeasuredDimension(
                 getDefaultSize(0, widthMeasureSpec),
                 rowHeight.toInt() * (timeScaleRows.size + 1)

@@ -5,6 +5,12 @@
         <attr name="textColor" format="color|reference" />
         <attr name="textSize" format="dimension|reference" />
     </declare-styleable>
+    <declare-styleable name="ScheduleCalendarRecyclerView" parent="ScheduleCalendarViewBase">
+        <attr name="rowHeight" format="dimension|reference" />
+        <attr name="gridLineColor" format="color|reference" />
+        <attr name="timeScaleWidth" format="dimension|reference" />
+        <attr name="dateLabelHeight" format="dimension|reference" />
+    </declare-styleable>
     <declare-styleable name="DateLabelView" parent="ScheduleCalendarViewBase">
         <attr name="dayOfWeekTextColor" format="color|reference" />
         <attr name="dateTextColor" format="color|reference" />
@@ -15,6 +21,7 @@
         <attr name="todayCirclePadding" format="dimension|reference" />
     </declare-styleable>
     <declare-styleable name="TimeScaleView" parent="ScheduleCalendarViewBase" />
+    <attr name="scv_rowHeight" format="dimension|reference" />
     <attr name="dateLabelView" format="reference" />
     <attr name="timeScaleView" format="reference" />
 </resources>

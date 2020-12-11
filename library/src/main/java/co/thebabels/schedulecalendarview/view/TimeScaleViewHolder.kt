@@ -10,6 +10,6 @@ import co.thebabels.schedulecalendarview.ScheduleItem
 class TimeScaleViewHolder(itemView: View) : ScheduleCalendarAdapter.ViewHolder(itemView) {
 
     override fun bind(item: ScheduleItem) {
-        // Dos nothing
+        // Do nothing
     }
 }

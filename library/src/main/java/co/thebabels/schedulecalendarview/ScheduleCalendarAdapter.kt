@@ -11,7 +11,7 @@ import java.lang.IllegalArgumentException
 
 
 abstract class ScheduleCalendarAdapter() :
-    RecyclerView.Adapter<ScheduleCalendarAdapter.ViewHolder>() {
+        RecyclerView.Adapter<ScheduleCalendarAdapter.ViewHolder>() {
 
     companion object {
         const val ViewTypeTimeScale = 100
@@ -39,13 +39,13 @@ abstract class ScheduleCalendarAdapter() :
     }
 
     override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
+            parent: ViewGroup,
+            viewType: Int
     ): ViewHolder {
         return when (viewType) {
             ViewTypeTimeScale -> TimeScaleViewHolder(TimeScaleView(parent.context))
-            ViewTypeSchedule -> createScheduleViewHolder(parent)
             ViewTypeDateLabel -> DateLabelViewHolder(DateLabelView(parent.context))
+            ViewTypeSchedule -> createScheduleViewHolder(parent)
             else -> throw IllegalArgumentException("unknown view type: ${viewType}")
         }
     }
@@ -79,7 +79,7 @@ abstract class ScheduleCalendarAdapter() :
     }
 
     abstract class ViewHolder(itemView: View) :
-        RecyclerView.ViewHolder(itemView) {
+            RecyclerView.ViewHolder(itemView) {
 
         abstract fun bind(item: ScheduleItem)
     }

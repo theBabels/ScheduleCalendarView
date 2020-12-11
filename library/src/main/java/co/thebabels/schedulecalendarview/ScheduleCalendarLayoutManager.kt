@@ -67,9 +67,9 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
 
     override fun generateDefaultLayoutParams(): RecyclerView.LayoutParams {
         Log.println(
-            Log.DEBUG,
-            TAG,
-            "generateDefaultLayoutParams: ${width}/${daysCount}, ${height}/${ROWS_COUNT}"
+                Log.DEBUG,
+                TAG,
+                "generateDefaultLayoutParams: ${width}/${daysCount}, ${height}/${ROWS_COUNT}"
         )
         return LayoutParams(rowWidth(), height / ROWS_COUNT)
     }
@@ -79,8 +79,8 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     }
 
     override fun generateLayoutParams(
-        c: Context?,
-        attrs: AttributeSet?
+            c: Context?,
+            attrs: AttributeSet?
     ): RecyclerView.LayoutParams {
         return LayoutParams(c, attrs)
     }
@@ -108,9 +108,9 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
 
     // add child view of item at given adapter [position], and return the view 'right' position.
     private fun addChild(
-        position: Int,
-        recycler: RecyclerView.Recycler,
-        anchorDateLabel: View?
+            position: Int,
+            recycler: RecyclerView.Recycler,
+            anchorDateLabel: View?
     ): Int {
         val v = recycler.getViewForPosition(position)
 
@@ -135,13 +135,13 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             measureChild(v, 0, 0)
             // calculate layout position based on first
             val left = 0
-            val top = 0
+            val top = headerOffset()
             val right = left + getDecoratedMeasuredWidth(v) // TODO
             val bottom = top + getDecoratedMeasuredHeight(v)
 
             Log.d(
-                TAG,
-                "layoutTimeScale: position='${position}', left='${left}',top='${top}', right='${right}', bottom='${bottom}'"
+                    TAG,
+                    "layoutTimeScale: position='${position}', left='${left}',top='${top}', right='${right}', bottom='${bottom}'"
             )
 
             // execute layout
@@ -157,9 +157,9 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     }
 
     override fun scrollVerticallyBy(
-        dy: Int,
-        recycler: RecyclerView.Recycler?,
-        state: RecyclerView.State?
+            dy: Int,
+            recycler: RecyclerView.Recycler?,
+            state: RecyclerView.State?
     ): Int {
         // get 'TimeScaleView'
         val timeScaleView = getTimeScale() ?: return 0
@@ -168,8 +168,8 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         val scrollAmount = calculateVerticalScrollAmount(dy, timeScaleTop, timeScaleBottom)
 
         Log.d(
-            TAG,
-            "scrollVerticalBy: dy='${dy}',scrollAmount='${scrollAmount}'(firstTop='${timeScaleTop}',firstBottom='${timeScaleBottom}')"
+                TAG,
+                "scrollVerticalBy: dy='${dy}',scrollAmount='${scrollAmount}'(firstTop='${timeScaleTop}',firstBottom='${timeScaleBottom}')"
         )
 
         offsetChildrenVertical(-scrollAmount)
@@ -178,14 +178,14 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     }
 
     private fun calculateVerticalScrollAmount(
-        dy: Int,
-        firstItemTop: Int,
-        firstItemBottom: Int
+            dy: Int,
+            firstItemTop: Int,
+            firstItemBottom: Int
     ): Int {
         return if (dy > 0) { // upper swipe
             min(dy, firstItemBottom - height + paddingBottom)
         } else {
-            max(dy, -(paddingTop - firstItemTop))
+            max(dy, -(paddingTop + headerOffset() - firstItemTop))
         }
     }
 
@@ -194,9 +194,9 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     }
 
     override fun scrollHorizontallyBy(
-        dx: Int,
-        recycler: RecyclerView.Recycler?,
-        state: RecyclerView.State?
+            dx: Int,
+            recycler: RecyclerView.Recycler?,
+            state: RecyclerView.State?
     ): Int {
         // first child of 'DateLabelView'
         val firstView = getFirstDateLabel() ?: return 0
@@ -207,8 +207,8 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         val scrollAmount = calculateHorizontalScrollAmount(dx, firstLeft, lastRight)
 
         Log.d(
-            TAG,
-            "scrollVerticalBy: dy='${dx}' scrollAmount='${scrollAmount}'(firstTop='${firstLeft}', firstBottom='${firstRight}')"
+                TAG,
+                "scrollVerticalBy: dy='${dx}' scrollAmount='${scrollAmount}'(firstTop='${firstLeft}', firstBottom='${firstRight}')"
         )
 
         // add & remove new views TODO
@@ -239,9 +239,9 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     }
 
     private fun calculateHorizontalScrollAmount(
-        dx: Int,
-        firstItemLeft: Int,
-        lastItemRight: Int
+            dx: Int,
+            firstItemLeft: Int,
+            lastItemRight: Int
     ): Int {
         return if (dx > 0) {
             if (lastVisibleItemPosition == itemCount - 1) {
@@ -276,19 +276,19 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         val anchorDateLabelStart = anchorDateLabelLp?.start
         val left = anchorDateLabel?.let { anchorLabel ->
             getDecoratedRight(anchorLabel) + rowWidth * (lp.start?.dateDiff(anchorDateLabelStart!!)
-                ?.let { it - 1 } ?: 0)
+                    ?.let { it - 1 } ?: 0)
         } ?: timeScaleWidth
         val top = if (lp.isDateLabel) {
             0
         } else {
-            (lp.start?.hourOfDay()?.let { it * rowHeight + dateLabelHeight }?.toInt()
-                ?: 0) + currentVerticalScroll()
+            (lp.start?.hourOfDay()?.let { it * rowHeight + headerOffset() }?.toInt()
+                    ?: 0) + currentVerticalScroll()
         }
         val right = left + getDecoratedMeasuredWidth(view)
         val bottom = top + getDecoratedMeasuredHeight(view)
         Log.d(
-            TAG,
-            "layoutColumn: position='${position}', left='${left}',top='${top}', right='${right}', bottom='${bottom}'"
+                TAG,
+                "layoutColumn: position='${position}', left='${left}',top='${top}', right='${right}', bottom='${bottom}'"
         )
 
         // execute layout
@@ -307,9 +307,9 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     }
 
     private fun fillFollowing(
-        scrollAmount: Int,
-        lastItemRight: Int,
-        recycler: RecyclerView.Recycler
+            scrollAmount: Int,
+            lastItemRight: Int,
+            recycler: RecyclerView.Recycler
     ) {
         for (i in lastVisibleItemPosition + 1 until itemCount) {
             val right = addChild(i, recycler, getFirstDateLabel())
@@ -321,9 +321,9 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     }
 
     private fun fillPrevious(
-        scrollAmount: Int,
-        firstItemLeft: Int,
-        recycler: RecyclerView.Recycler
+            scrollAmount: Int,
+            firstItemLeft: Int,
+            recycler: RecyclerView.Recycler
     ) {
         while (firstVisibleItemPosition > FIX_VIEW_OFFSET) {
             val right = addChild(firstVisibleItemPosition - 1, recycler, getFirstDateLabel())
@@ -336,8 +336,8 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     }
 
     private fun removeRightRows(
-        scrollAmount: Int,
-        recycler: RecyclerView.Recycler
+            scrollAmount: Int,
+            recycler: RecyclerView.Recycler
     ) {
         while (true) {
             val left = getChildAt(childCount - 1)?.left ?: break
@@ -351,8 +351,8 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     }
 
     private fun removeLeftRows(
-        scrollAmount: Int,
-        recycler: RecyclerView.Recycler
+            scrollAmount: Int,
+            recycler: RecyclerView.Recycler
     ) {
         while (true) {
             val right = getChildAt(FIX_VIEW_OFFSET)?.right ?: break
@@ -390,7 +390,11 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
      * Return current vertical scroll distance.
      */
     private fun currentVerticalScroll(): Int {
-        return getTimeScale()?.let { getDecoratedTop(it) } ?: 0
+        return getTimeScale()?.let { getDecoratedTop(it) - headerOffset() } ?: 0
+    }
+
+    private fun headerOffset(): Int {
+        return dateLabelHeight
     }
 
     /**

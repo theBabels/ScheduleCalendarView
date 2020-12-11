@@ -8,11 +8,13 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 
-
+/**
+ * [RecyclerView] working with [ScheduleCalendarLayoutManager].
+ */
 class ScheduleCalendarRecyclerView @JvmOverloads constructor(
-    context: Context,
-    attributeSet: AttributeSet? = null,
-    defStyleAttr: Int = 0,
+        context: Context,
+        attributeSet: AttributeSet? = null,
+        defStyleAttr: Int = 0,
 ) : RecyclerView(context, attributeSet, defStyleAttr) {
 
 
@@ -25,13 +27,31 @@ class ScheduleCalendarRecyclerView @JvmOverloads constructor(
     private var scrolledX = 0
 
     private var paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private var columns: Int = 7
-    private var rowHeight: Float = 200f
-    private var dateLabelHeight = 200
-    private var timeScaleWidth: Int = 200
+    private var columns = 7
+    private var rowHeight = 0f
+    private var dateLabelHeight = 0
+    private var timeScaleWidth = 0
 
     init {
-        paint.color = ContextCompat.getColor(context, R.color.grid_line)
+        overScrollMode
+        // set up attrs
+        context.theme.obtainStyledAttributes(
+                attributeSet,
+                R.styleable.ScheduleCalendarRecyclerView,
+                defStyleAttr,
+                R.style.ScheduleCalendarViewWidget_RecyclerView,
+        ).apply {
+            try {
+                rowHeight = getDimension(R.styleable.ScheduleCalendarRecyclerView_rowHeight, 0f)
+                // colors
+                paint.color = getColor(R.styleable.ScheduleCalendarRecyclerView_gridLineColor, 0)
+                dateLabelHeight = getDimensionPixelSize(R.styleable.ScheduleCalendarRecyclerView_dateLabelHeight, 0)
+                timeScaleWidth = getDimensionPixelSize(R.styleable.ScheduleCalendarRecyclerView_timeScaleWidth, 0)
+            } finally {
+                recycle()
+            }
+        }
+
     }
 
     override fun setLayoutManager(layout: LayoutManager?) {
@@ -45,10 +65,10 @@ class ScheduleCalendarRecyclerView @JvmOverloads constructor(
 
     override fun onDraw(c: Canvas?) {
         super.onDraw(c)
-        Log.println(Log.DEBUG, TAG, "onDraw='${scrolledY}', '${scrollX}'")
+        Log.v(TAG, "onDraw='${scrolledY}', '${scrollX}'")
 
-        val offsetY = -scrolledY
-        for (i in 0 until ScheduleCalendarView.ROWS_COUNT) {
+        val offsetY = -scrolledY + dateLabelHeight
+        for (i in 0 until ROWS_COUNT) {
             val y = offsetY + rowHeight * i
             c?.drawLine(0f, y, width.toFloat(), y, paint)
         }
@@ -63,7 +83,7 @@ class ScheduleCalendarRecyclerView @JvmOverloads constructor(
 
     override fun onScrolled(dx: Int, dy: Int) {
         super.onScrolled(dx, dy)
-        Log.d(TAG, "onScrolled: ${dx}, ${dy}, ${scrollY}")
+        Log.v(TAG, "onScrolled: dx='${dx}', dy='${dy}', scrolledX='${scrolledX}, 'scrolledY='${scrolledY}'")
         scrolledY += dy
         scrolledX += dx
     }

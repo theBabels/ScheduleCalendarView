@@ -3,6 +3,13 @@
 
     <style name="ScheduleCalendarViewWidget" />
 
+    <style name="ScheduleCalendarViewWidget.RecyclerView">
+        <item name="rowHeight">64dp</item>
+        <item name="timeScaleWidth">64dp</item>
+        <item name="dateLabelHeight">72dp</item>
+        <item name="gridLineColor">@color/grid_line</item>
+    </style>
+
     <style name="ScheduleCalendarViewWidget.DateLabel">
         <item name="backgroundColor">?attr/colorSurface</item>
         <item name="dateTextColor">@color/date_label_date_text</item>

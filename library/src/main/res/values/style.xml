@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="DateLabel">
+    <style name="ScheduleCalendarViewWidget" />
+
+    <style name="ScheduleCalendarViewWidget.DateLabel">
         <item name="backgroundColor">?attr/colorSurface</item>
         <item name="dateTextColor">@color/date_label_date_text</item>
         <item name="dayOfWeekTextColor">@color/date_label_day_of_week_text</item>
@@ -12,7 +14,7 @@
         <item name="todayCirclePadding">2dp</item>
     </style>
 
-    <style name="TimeScale">
+    <style name="ScheduleCalendarViewWidget.TimeScale">
         <item name="backgroundColor">?attr/colorSurface</item>
         <item name="textColor">@color/grid_line</item>
         <item name="textSize">14sp</item>

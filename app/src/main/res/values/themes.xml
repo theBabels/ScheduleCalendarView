@@ -16,11 +16,11 @@
         <item name="timeScaleView">@style/AppWidget.TimeScale</item>
     </style>
 
-    <style name="AppWidget.DateLabel" parent="DateLabel">
+    <style name="AppWidget.DateLabel" parent="ScheduleCalendarViewWidget.DateLabel">
         <item name="backgroundColor">?attr/colorSurface</item>
     </style>
 
-    <style name="AppWidget.TimeScale" parent="TimeScale">
+    <style name="AppWidget.TimeScale" parent="ScheduleCalendarViewWidget.TimeScale">
         <item name="backgroundColor">?attr/colorSurface</item>
     </style>
 </resources>

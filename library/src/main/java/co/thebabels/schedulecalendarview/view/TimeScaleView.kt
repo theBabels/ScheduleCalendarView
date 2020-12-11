@@ -60,7 +60,7 @@ class TimeScaleView @JvmOverloads constructor(
                 attributeSet,
                 R.styleable.ScheduleCalendarViewBase,
                 defStyleAttr,
-                R.style.TimeScale,
+                R.style.ScheduleCalendarViewWidget_TimeScale,
         ).apply {
             try {
                 // colors

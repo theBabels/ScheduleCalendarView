@@ -42,7 +42,7 @@ class DateLabelView @JvmOverloads constructor(
                 attributeSet,
                 R.styleable.ScheduleCalendarViewBase,
                 defStyleAttr,
-                R.style.DateLabel,
+                R.style.ScheduleCalendarViewWidget_DateLabel,
         ).apply {
             try {
                 // colors
@@ -56,7 +56,7 @@ class DateLabelView @JvmOverloads constructor(
                 attributeSet,
                 R.styleable.DateLabelView,
                 defStyleAttr,
-                R.style.DateLabel,
+                R.style.ScheduleCalendarViewWidget_DateLabel,
         ).apply {
             try {
                 // colors

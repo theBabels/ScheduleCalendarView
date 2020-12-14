@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.util.Log
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 
 /**
@@ -20,7 +19,6 @@ class ScheduleCalendarRecyclerView @JvmOverloads constructor(
 
     companion object {
         private const val TAG = "SCRecyclerView"
-        const val ROWS_COUNT = 24
     }
 
     private var scrolledY = 0

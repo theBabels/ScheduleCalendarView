@@ -16,21 +16,21 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
-    private val lm = GridLayoutManager(this, 2)
     private val adapter = TextScheduleAdapter()
+    private val scrollListener = ScrollListener()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         val recyclerView: RecyclerView = findViewById(R.id.recycler_view)
-        val layoutListener = LayoutListener(this)
         recyclerView.layoutManager =
-            ScheduleCalendarLayoutManager(this).apply {
-                setDateLookUp(DefaultDateLookUp(adapter))
-                setListener(layoutListener)
-            }
+                ScheduleCalendarLayoutManager(this).apply {
+                    setDateLookUp(DefaultDateLookUp(adapter))
+                    setListener(LayoutListener())
+                }
         recyclerView.adapter = adapter
+        recyclerView.addOnScrollListener(scrollListener)
 //        val snapHelper = PagerSnapHelper()
 //        snapHelper.attachToRecyclerView(recyclerView)
 
@@ -42,30 +42,30 @@ class MainActivity : AppCompatActivity() {
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }
-        val days = DateScheduleItem.firstDayOfWeek().nextDays(60, true)
+        val days = DateScheduleItem.firstDayOfWeek().nextDays(30, true)
         Log.d("DEBUG", "${days.map { it.dateString() }}")
         adapter.addItems(
-            *days.toTypedArray(),
-            TextScheduleItem(
-                "text-000",
-                cal.time,
-                cal.apply { add(Calendar.HOUR, 1) }.time,
-            ),
-            TextScheduleItem(
-                "text-001",
-                cal.apply { add(Calendar.HOUR, 1) }.time,
-                cal.apply { add(Calendar.HOUR, 1) }.time
-            ),
-            TextScheduleItem(
-                "text-002",
-                cal.apply { add(Calendar.DATE, 1) }.time,
-                cal.apply { add(Calendar.HOUR, 4) }.time
-            ),
-            TextScheduleItem(
-                "text-003",
-                cal.apply { add(Calendar.DATE, 1) }.time,
-                cal.apply { add(Calendar.HOUR, 1) }.time
-            ),
+                *days.toTypedArray(),
+                TextScheduleItem(
+                        "text-000",
+                        cal.time,
+                        cal.apply { add(Calendar.HOUR, 1) }.time,
+                ),
+                TextScheduleItem(
+                        "text-001",
+                        cal.apply { add(Calendar.HOUR, 1) }.time,
+                        cal.apply { add(Calendar.HOUR, 1) }.time
+                ),
+                TextScheduleItem(
+                        "text-002",
+                        cal.apply { add(Calendar.DATE, 1) }.time,
+                        cal.apply { add(Calendar.HOUR, 4) }.time
+                ),
+                TextScheduleItem(
+                        "text-003",
+                        cal.apply { add(Calendar.DATE, 1) }.time,
+                        cal.apply { add(Calendar.HOUR, 1) }.time
+                ),
         )
     }
 
@@ -90,7 +90,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         class ViewHolder(itemView: View) :
-            ScheduleCalendarAdapter.ViewHolder(itemView) {
+                ScheduleCalendarAdapter.ViewHolder(itemView) {
 
             override fun bind(item: ScheduleItem) {
                 if (itemView is TextView) {
@@ -102,11 +102,39 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private class LayoutListener(val a: Activity) : ScheduleCalendarLayoutManager.Listener {
+    private inner class LayoutListener() : ScheduleCalendarLayoutManager.Listener {
         override fun onFirstItemChanged(position: Int, date: Date) {
-            val monthTextView: TextView = a.findViewById(R.id.month_text)
+            val monthTextView: TextView = findViewById(R.id.month_text)
             monthTextView.text = Calendar.getInstance().apply { time = date }
-                .getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault())
+                    .let {
+                        "${it.get(Calendar.YEAR)}." +
+                                it.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault())
+                    }
+        }
+    }
+
+    private inner class ScrollListener : RecyclerView.OnScrollListener() {
+
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+            // add date label items for infinity scroll.
+            if (!recyclerView.isComputingLayout) {
+                recyclerView.layoutManager?.let { lm ->
+                    lm.getChildAt(0)?.let {
+                        lm.getPosition(it)
+                    }
+                }?.let { adapterPosition ->
+                    if (adapterPosition < 30 && dx < 0) {
+                        recyclerView.post {
+                            adapter.addPreviousDateLabelItems(10)
+                        }
+                    }
+                    if (adapterPosition > adapter.itemCount - 15 && dx > 0) {
+                        recyclerView.post {
+                            adapter.addFollowingDateLabelItems(10)
+                        }
+                    }
+                }
+            }
         }
     }
 }

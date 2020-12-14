@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import co.thebabels.schedulecalendarview.extention.dateDiff
 import co.thebabels.schedulecalendarview.extention.hourDiff
 import co.thebabels.schedulecalendarview.extention.hourOfDay
+import co.thebabels.schedulecalendarview.view.TimeScaleView
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
@@ -28,8 +29,6 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
 
     companion object {
         const val TAG = "SCLayoutManager"
-        const val ROWS_COUNT = 24
-        const val FIX_VIEW_OFFSET = 1
     }
 
     var daysCount: Int = 7
@@ -38,8 +37,11 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     var timeScaleWidth = 0
     private lateinit var dateLookUp: DateLookUp
     private var listener: Listener? = null
-    private var firstVisibleItemPosition: Int = 0
+    private var firstVisibleItemPosition: Int = -1
     private var lastVisibleItemPosition: Int = 0
+
+    private val lastScheduleItemAdapterPosition: Int
+        get() = itemCount - 1 - FIX_VIEW_OFFSET
 
     /**
      * Set [DateLookUp].
@@ -59,7 +61,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
      * Returns a [ScheduleItem.start] of first visible item.
      */
     fun getFirstItemDate(): Date? {
-        if (firstVisibleItemPosition < FIX_VIEW_OFFSET) {
+        if (firstVisibleItemPosition < 0) {
             return null
         }
         return dateLookUp.lookUpStart(firstVisibleItemPosition)
@@ -90,16 +92,28 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     }
 
     override fun onLayoutChildren(recycler: RecyclerView.Recycler?, state: RecyclerView.State?) {
-        Log.d(TAG, "onLayoutChildren")
+        Log.d(TAG, "onLayoutChildren: firstVisibleItem='${firstVisibleItemPosition}', lastVisibleItem='${lastVisibleItemPosition}', itemCount='${state?.itemCount}', childCount='${childCount}', '${state}'")
+        // FIXME It is better to do a proper redraw.
+        if (childCount > 0) {
+            // update visible item position because the adapter size is changed.
+            firstVisibleItemPosition = getChildAt(0)?.let { getPosition(it) }
+                    ?: firstVisibleItemPosition
+            lastVisibleItemPosition = getChildAt(childCount - 1 - FIX_VIEW_OFFSET)?.let { getPosition(it) }
+                    ?: lastVisibleItemPosition
+            return
+        }
         recycler?.let {
             detachAndScrapAttachedViews(it)
-            for (i in 0 until itemCount) {
+            for (i in 0 until itemCount - FIX_VIEW_OFFSET) {
                 val right = addChild(i, it, getFirstDateLabel())
                 lastVisibleItemPosition = i
                 if (right > width - paddingRight && dateLookUp.isDateLabel(i + 1)) {
                     break
                 }
             }
+            // add TimeScaleView
+            addChild(itemCount - 1, recycler, getFirstDateLabel())
+            // notify listener
             getFirstItemDate()?.let {
                 listener?.onFirstItemChanged(firstVisibleItemPosition, it)
             }
@@ -112,42 +126,52 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             recycler: RecyclerView.Recycler,
             anchorDateLabel: View?
     ): Int {
+        Log.d(TAG, "addChild:position='${position}', firstVisibleItem='${firstVisibleItemPosition}', lastVisibleItem='${lastVisibleItemPosition}', itemCount='${itemCount}'")
+
         val v = recycler.getViewForPosition(position)
 
         // add view
-        if (position <= firstVisibleItemPosition) {
-            if (position < FIX_VIEW_OFFSET) {
-                addView(v, position)
+        if (position > lastVisibleItemPosition) {
+            if (position > lastScheduleItemAdapterPosition) {
+                addView(v, childCount - (position - (itemCount)))
             } else {
-                addView(v, FIX_VIEW_OFFSET)
+                addView(v, childCount - FIX_VIEW_OFFSET)
             }
         } else {
-            addView(v)
+            if (position < firstVisibleItemPosition) {
+                addView(v, 0)
+            } else {
+                addView(v, position - firstVisibleItemPosition)
+            }
         }
 
-        if (position == 0) {
-            // assign date to layout param
-            val lp = assignDate(v, position)
-            lp.width = this.timeScaleWidth
-            v.layoutParams = lp
+        when (position - (itemCount - 1)) {
+            0 -> {
+                // the last item is 'TimeScaleView'.
+                // assign date to layout param
+                val lp = assignDate(v, position)
+                lp.width = this.timeScaleWidth
+                v.layoutParams = lp
 
-            // measure child
-            measureChild(v, 0, 0)
-            // calculate layout position based on first
-            val left = 0
-            val top = headerOffset()
-            val right = left + getDecoratedMeasuredWidth(v) // TODO
-            val bottom = top + getDecoratedMeasuredHeight(v)
+                // measure child
+                measureChild(v, 0, 0)
+                // calculate layout position based on first
+                val left = 0
+                val top = headerOffset()
+                val right = left + getDecoratedMeasuredWidth(v)
+                val bottom = top + getDecoratedMeasuredHeight(v)
 
-            Log.d(
-                    TAG,
-                    "layoutTimeScale: position='${position}', left='${left}',top='${top}', right='${right}', bottom='${bottom}'"
-            )
+                Log.d(
+                        TAG,
+                        "layoutTimeScale: position='${position}', left='${left}',top='${top}', right='${right}', bottom='${bottom}'"
+                )
 
-            // execute layout
-            layoutDecoratedWithMargins(v, left, top, right, bottom)
-        } else {
-            layoutScheduleItem(v, position, anchorDateLabel)
+                // execute layout
+                layoutDecoratedWithMargins(v, left, top, right, bottom)
+            }
+            else -> {
+                layoutScheduleItem(v, position, anchorDateLabel)
+            }
         }
         return v.right
     }
@@ -169,7 +193,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
 
         Log.d(
                 TAG,
-                "scrollVerticalBy: dy='${dy}',scrollAmount='${scrollAmount}'(firstTop='${timeScaleTop}',firstBottom='${timeScaleBottom}')"
+                "scrollVerticallyBy: dy='${dy}',scrollAmount='${scrollAmount}'(timeScaleTop='${timeScaleTop}',timeScaleBottom='${timeScaleBottom}, height='${height}'')"
         )
 
         offsetChildrenVertical(-scrollAmount)
@@ -179,13 +203,13 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
 
     private fun calculateVerticalScrollAmount(
             dy: Int,
-            firstItemTop: Int,
-            firstItemBottom: Int
+            timeScaleTop: Int,
+            timeScaleBottom: Int
     ): Int {
         return if (dy > 0) { // upper swipe
-            min(dy, firstItemBottom - height + paddingBottom)
+            min(dy, timeScaleBottom - height + paddingBottom)
         } else {
-            max(dy, -(paddingTop + headerOffset() - firstItemTop))
+            max(dy, -(paddingTop + headerOffset() - timeScaleTop))
         }
     }
 
@@ -200,15 +224,15 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     ): Int {
         // first child of 'DateLabelView'
         val firstView = getFirstDateLabel() ?: return 0
-        val lastItem = getChildAt(childCount - 1)
+        val lastItem = getChildAt(childCount - 1 - FIX_VIEW_OFFSET)
         val firstLeft = getDecoratedLeft(firstView)
-        val firstRight = getDecoratedRight(firstView)
         val lastRight = lastItem?.let { getDecoratedRight(it) } ?: 0
         val scrollAmount = calculateHorizontalScrollAmount(dx, firstLeft, lastRight)
 
+        val lastItemName = if (lastItem == null) "null" else lastItem::class.java.name
         Log.d(
                 TAG,
-                "scrollVerticalBy: dy='${dx}' scrollAmount='${scrollAmount}'(firstTop='${firstLeft}', firstBottom='${firstRight}')"
+                "scrollHorizontallyBy:${lastScheduleItemAdapterPosition} dx='${dx}' scrollAmount='${scrollAmount}'(firstLeft='${firstLeft}', lastRight='${lastRight}'${lastItemName})"
         )
 
         // add & remove new views TODO
@@ -244,13 +268,13 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             lastItemRight: Int
     ): Int {
         return if (dx > 0) {
-            if (lastVisibleItemPosition == itemCount - 1) {
+            if (lastVisibleItemPosition == lastScheduleItemAdapterPosition) {
                 min(dx, lastItemRight - (width - paddingRight))
             } else {
                 dx
             }
         } else {
-            if (firstVisibleItemPosition == FIX_VIEW_OFFSET) {
+            if (firstVisibleItemPosition == 0) {
                 max(dx, -(paddingLeft + timeScaleWidth - firstItemLeft))
             } else {
                 dx
@@ -269,7 +293,8 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         // calculate layout position based on first
         val isFirstDateLabelInitialization = anchorDateLabel == null
         if (isFirstDateLabelInitialization) {
-            firstVisibleItemPosition = FIX_VIEW_OFFSET
+            firstVisibleItemPosition = 0
+            lastVisibleItemPosition = 0
         }
         val rowWidth = rowWidth()
         val anchorDateLabelLp = anchorDateLabel?.layoutParams?.let { it as LayoutParams }
@@ -311,10 +336,11 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             lastItemRight: Int,
             recycler: RecyclerView.Recycler
     ) {
-        for (i in lastVisibleItemPosition + 1 until itemCount) {
-            val right = addChild(i, recycler, getFirstDateLabel())
+        while (lastVisibleItemPosition < lastScheduleItemAdapterPosition) {
+//        for (i in lastVisibleItemPosition + 1 until itemCount - 1 - FIX_VIEW_OFFSET) {
+            val right = addChild(lastVisibleItemPosition + 1, recycler, getFirstDateLabel())
             lastVisibleItemPosition++
-            if (right > width - paddingRight && dateLookUp.isDateLabel(i + 1)) {
+            if (right > width - paddingRight && dateLookUp.isDateLabel(lastVisibleItemPosition + 1)) {
                 break
             }
         }
@@ -325,7 +351,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             firstItemLeft: Int,
             recycler: RecyclerView.Recycler
     ) {
-        while (firstVisibleItemPosition > FIX_VIEW_OFFSET) {
+        while (firstVisibleItemPosition > 0) {
             val right = addChild(firstVisibleItemPosition - 1, recycler, getFirstDateLabel())
             firstVisibleItemPosition--
             getFirstItemDate()?.let { listener?.onFirstItemChanged(firstVisibleItemPosition, it) }
@@ -340,9 +366,10 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             recycler: RecyclerView.Recycler
     ) {
         while (true) {
-            val left = getChildAt(childCount - 1)?.left ?: break
+            val lastScheduleChildPosition = childCount - 1 - FIX_VIEW_OFFSET
+            val left = getChildAt(lastScheduleChildPosition)?.left ?: break
             if (left + scrollAmount > width - paddingRight) {
-                removeAndRecycleViewAt(childCount - 1, recycler)
+                removeAndRecycleViewAt(lastScheduleChildPosition, recycler)
                 lastVisibleItemPosition--
             } else {
                 break
@@ -355,9 +382,9 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             recycler: RecyclerView.Recycler
     ) {
         while (true) {
-            val right = getChildAt(FIX_VIEW_OFFSET)?.right ?: break
+            val right = getChildAt(0)?.right ?: break
             if (right - scrollAmount < paddingLeft) {
-                removeAndRecycleViewAt(FIX_VIEW_OFFSET, recycler)
+                removeAndRecycleViewAt(0, recycler)
                 firstVisibleItemPosition++
                 getFirstItemDate()?.let {
                     listener?.onFirstItemChanged(firstVisibleItemPosition, it)
@@ -369,11 +396,13 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     }
 
     private fun getTimeScale(): View? {
-        return getChildAt(0)
+        return getChildAt(childCount - 1)?.let {
+            if (it is TimeScaleView) it else null
+        }
     }
 
     private fun getFirstDateLabel(): View? {
-        for (i in FIX_VIEW_OFFSET until childCount) {
+        for (i in 0 until childCount - FIX_VIEW_OFFSET) {
             val v = getChildAt(i) ?: return null
             if ((v.layoutParams as LayoutParams).isDateLabel) {
                 return v

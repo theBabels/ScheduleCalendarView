@@ -93,7 +93,6 @@ class DateLabelView @JvmOverloads constructor(
         paint.color = if (isToday) todayColor else dayOfWeekTextColor
         paint.typeface = dayOfWekTypeface
         paint.getTextBounds(dayOfWeekText, 0, dayOfWeekText.length, textBounds)
-        Log.d("HOGE", "${textBounds.bottom}, ${textBounds.top}")
         canvas?.drawText(
                 dayOfWeekText,
                 width / 2f,

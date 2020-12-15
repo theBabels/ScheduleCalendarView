@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -31,6 +32,13 @@ class MainActivity : AppCompatActivity() {
         recyclerView.addOnScrollListener(scrollListener)
 //        val snapHelper = PagerSnapHelper()
 //        snapHelper.attachToRecyclerView(recyclerView)
+
+        val todayButton: Button = findViewById(R.id.today_btn)
+        todayButton.setOnClickListener {
+            Log.d("MainActivity", "onClickTodayButton")
+            adapter.getDateLabelPosition()?.let {
+                recyclerView.smoothScrollToPosition(it) }
+        }
 
 
         val cal = Calendar.getInstance()

@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">schedule-calendar-view</string>
+    <string name="btn_today">Today</string>
 </resources>

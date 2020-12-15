@@ -1,12 +1,15 @@
 package co.thebabels.schedulecalendarview
 
 import android.content.Context
+import android.graphics.PointF
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
+import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.SmoothScroller.ScrollVectorProvider
 import co.thebabels.schedulecalendarview.extention.dateDiff
 import co.thebabels.schedulecalendarview.extention.hourDiff
 import co.thebabels.schedulecalendarview.extention.hourOfDay
@@ -18,7 +21,7 @@ import kotlin.math.min
 /**
  * A [RecyclerView.LayoutManager] implementations that lays out schedule items in weekly calendar.
  */
-class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManager() {
+class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManager(), ScrollVectorProvider {
 
     /**
      * Listener for layout event.
@@ -66,6 +69,15 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             return null
         }
         return dateLookUp.lookUpStart(firstVisibleItemPosition)
+    }
+
+    override fun computeScrollVectorForPosition(targetPosition: Int): PointF? {
+        if (childCount == 0) {
+            return null
+        }
+        val firstChildPos = getPosition(getChildAt(0)!!)
+        val direction = if (targetPosition < firstChildPos) -1f else 1f
+        return PointF(direction, 0f)
     }
 
     override fun generateDefaultLayoutParams(): RecyclerView.LayoutParams {
@@ -175,6 +187,12 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             }
         }
         return v.right
+    }
+
+    override fun smoothScrollToPosition(recyclerView: RecyclerView?, state: RecyclerView.State?, position: Int) {
+        val linearSmoothScroller = recyclerView?.let { LinearSmoothScroller(it.context) } ?: return
+        linearSmoothScroller.targetPosition = position
+        startSmoothScroll(linearSmoothScroller)
     }
 
     override fun canScrollVertically(): Boolean {

@@ -4,6 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import co.thebabels.schedulecalendarview.extention.dateDiff
+import co.thebabels.schedulecalendarview.extention.isToday
 import co.thebabels.schedulecalendarview.view.*
 import java.lang.IllegalArgumentException
 import java.util.*
@@ -39,6 +40,29 @@ abstract class ScheduleCalendarAdapter() :
         val position = findListPositionToBeInserted(item)
         this.items.add(position, item)
         notifyItemInserted(position)
+    }
+
+    /**
+     * Returns the position of [DateScheduleItem] with the same date as specified [date].
+     *
+     * @param date target date for scrolling. The default value is current time (=today).
+     * @return the position of [DateScheduleItem] if it is found.
+     *  'null' if [items] has no [DateScheduleItem].
+     * '0' if given [date] is before than all [DateScheduleItem] in the [items].
+     * '[items].size - 1' if given [date] is after than all [DateScheduleItem] in the [items].
+     */
+    fun getDateLabelPosition(date: Date = Date()): Int? {
+        val first = items.firstOrNull { it is DateScheduleItem }?.start() ?: return null
+        if (date.before(first)) {
+            return 0
+        }
+        return items.indexOfFirst { it is DateScheduleItem && it.start().isToday(date) }.let {
+            if (it == -1) {
+                items.size - 1
+            } else {
+                it
+            }
+        }
     }
 
     private fun findListPositionToBeInserted(item: ScheduleItem): Int {

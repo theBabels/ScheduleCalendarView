@@ -423,7 +423,8 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     }
 
     private fun getFirstDateLabel(): View? {
-        for (i in 0 until childCount - FIX_VIEW_OFFSET) {
+        // loop all children including fixed-views because a fixed-views may not exist at the time of layout initialization.
+        for (i in 0 until childCount) {
             val v = getChildAt(i) ?: return null
             if ((v.layoutParams as LayoutParams).isDateLabel) {
                 return v

@@ -8,6 +8,7 @@
         <item name="timeScaleWidth">64dp</item>
         <item name="dateLabelHeight">72dp</item>
         <item name="gridLineColor">@color/grid_line</item>
+        <item name="currentTimeHeight">8dp</item>
     </style>
 
     <style name="ScheduleCalendarViewWidget.DateLabel">
@@ -25,5 +26,9 @@
         <item name="backgroundColor">?attr/colorSurface</item>
         <item name="textColor">@color/grid_line</item>
         <item name="textSize">14sp</item>
+    </style>
+
+    <style name="ScheduleCalendarViewWidget.CurrentTimeView">
+        <item name="lineColor">?attr/colorPrimary</item>
     </style>
 </resources>

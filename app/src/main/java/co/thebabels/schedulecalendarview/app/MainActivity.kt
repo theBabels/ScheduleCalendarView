@@ -1,8 +1,6 @@
 package co.thebabels.schedulecalendarview.app
 
-import android.app.Activity
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -66,6 +64,7 @@ class MainActivity : AppCompatActivity() {
                         cal.apply { add(Calendar.DATE, 1) }.time,
                         cal.apply { add(Calendar.HOUR, 1) }.time
                 ),
+                CurrentTimeScheduleItem.now(),
         )
     }
 

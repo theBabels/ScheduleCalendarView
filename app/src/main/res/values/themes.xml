@@ -14,6 +14,7 @@
         <!-- Customize your theme here. -->
         <item name="dateLabelView">@style/AppWidget.DateLabel</item>
         <item name="timeScaleView">@style/AppWidget.TimeScale</item>
+        <item name="currentTimeView">@style/AppWidget.CurrentTime</item>
     </style>
 
     <style name="AppWidget.DateLabel" parent="ScheduleCalendarViewWidget.DateLabel">
@@ -22,5 +23,9 @@
 
     <style name="AppWidget.TimeScale" parent="ScheduleCalendarViewWidget.TimeScale">
         <item name="backgroundColor">?attr/colorSurface</item>
+    </style>
+
+    <style name="AppWidget.CurrentTime" parent="ScheduleCalendarViewWidget.CurrentTimeView">
+        <item name="lineColor">?attr/colorPrimary</item>
     </style>
 </resources>

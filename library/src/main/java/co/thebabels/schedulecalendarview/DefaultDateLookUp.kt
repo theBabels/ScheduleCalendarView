@@ -6,7 +6,7 @@ import java.util.*
  * Default implementation of [ScheduleCalendarLayoutManager.DateLookUp].
  */
 class DefaultDateLookUp(private val adapter: ScheduleCalendarAdapter) :
-    ScheduleCalendarLayoutManager.DateLookUp {
+        ScheduleCalendarLayoutManager.DateLookUp {
 
     override fun lookUpStart(position: Int): Date? {
         return adapter.getItem(position)?.start()
@@ -19,6 +19,12 @@ class DefaultDateLookUp(private val adapter: ScheduleCalendarAdapter) :
     override fun isDateLabel(position: Int): Boolean {
         return adapter.getItem(position)?.let {
             it is DateScheduleItem
+        } ?: false
+    }
+
+    override fun isCurrentTime(position: Int): Boolean {
+        return adapter.getItem(position)?.let {
+            it is CurrentTimeScheduleItem
         } ?: false
     }
 }

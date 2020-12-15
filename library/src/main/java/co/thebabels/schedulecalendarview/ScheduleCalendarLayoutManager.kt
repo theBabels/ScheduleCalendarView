@@ -35,6 +35,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     var rowHeight = 0f
     var dateLabelHeight = 0
     var timeScaleWidth = 0
+    var currentTimeHeight = 0
     private lateinit var dateLookUp: DateLookUp
     private var listener: Listener? = null
     private var firstVisibleItemPosition: Int = -1
@@ -313,7 +314,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         val bottom = top + getDecoratedMeasuredHeight(view)
         Log.d(
                 TAG,
-                "layoutColumn: position='${position}', left='${left}',top='${top}', right='${right}', bottom='${bottom}'"
+                "layoutScheduleItem: position='${position}', isDateLabel='${lp.isDateLabel}', left='${left}',top='${top}', right='${right}', bottom='${bottom}', anchorRight='${anchorDateLabel?.let { getDecoratedRight(it) }}', start='${lp.start}',anchorStart='${anchorDateLabelStart}'"
         )
 
         // execute layout
@@ -325,6 +326,8 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         lp.dateLabelHeight = dateLabelHeight
         lp.rowHeight = rowHeight
         lp.isDateLabel = dateLookUp.isDateLabel(position)
+        lp.isCurrentTime = dateLookUp.isCurrentTime(position)
+        lp.currentTimeHeight = currentTimeHeight
         lp.start = dateLookUp.lookUpStart(position)
         lp.end = dateLookUp.lookUpEnd(position)
         view.layoutParams = lp
@@ -432,8 +435,10 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     class LayoutParams : RecyclerView.LayoutParams {
 
         var dateLabelHeight: Int = 0
+        var currentTimeHeight = 0
         var rowHeight: Float = 0f
         var isDateLabel: Boolean = false
+        var isCurrentTime: Boolean = false
         var start: Date? = null
         var end: Date? = null
 
@@ -450,11 +455,14 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         fun calcHeight(): Int {
             return if (isDateLabel) {
                 dateLabelHeight
+            } else if (isCurrentTime) {
+                currentTimeHeight
             } else {
                 start?.let { start ->
                     end?.hourDiff(start)
                 }?.let {
-                    it * rowHeight
+                    // TODO set minimum size
+                    max(it * rowHeight, 16f)
                 }?.toInt() ?: 0
             }
         }
@@ -467,5 +475,6 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         fun lookUpStart(position: Int): Date?
         fun lookUpEnd(position: Int): Date?
         fun isDateLabel(position: Int): Boolean
+        fun isCurrentTime(position: Int): Boolean
     }
 }

@@ -4,10 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import co.thebabels.schedulecalendarview.extention.dateDiff
-import co.thebabels.schedulecalendarview.view.DateLabelView
-import co.thebabels.schedulecalendarview.view.DateLabelViewHolder
-import co.thebabels.schedulecalendarview.view.TimeScaleView
-import co.thebabels.schedulecalendarview.view.TimeScaleViewHolder
+import co.thebabels.schedulecalendarview.view.*
 import java.lang.IllegalArgumentException
 import java.util.*
 
@@ -19,7 +16,8 @@ abstract class ScheduleCalendarAdapter() :
         const val TAG = "SCAdapter"
         const val ViewTypeTimeScale = 100
         const val ViewTypeDateLabel = 101
-        const val ViewTypeSchedule = 102
+        const val ViewTypeCurrentTime = 102
+        const val ViewTypeSchedule = 110
     }
 
     private val items: MutableList<ScheduleItem> = mutableListOf()
@@ -118,6 +116,7 @@ abstract class ScheduleCalendarAdapter() :
         return when (viewType) {
             ViewTypeTimeScale -> TimeScaleViewHolder(TimeScaleView(parent.context))
             ViewTypeDateLabel -> DateLabelViewHolder(DateLabelView(parent.context))
+            ViewTypeCurrentTime -> CurrentTimeViewHolder(CurrentTimeView(parent.context))
             ViewTypeSchedule -> createScheduleViewHolder(parent)
             else -> throw IllegalArgumentException("unknown view type: ${viewType}")
         }
@@ -141,10 +140,10 @@ abstract class ScheduleCalendarAdapter() :
         return when (position) {
             items.size -> ViewTypeTimeScale
             else -> {
-                if (items.getOrNull(position) is DateScheduleItem) {
-                    ViewTypeDateLabel
-                } else {
-                    ViewTypeSchedule
+                when (items.getOrNull(position)) {
+                    is DateScheduleItem -> ViewTypeDateLabel
+                    is CurrentTimeScheduleItem -> ViewTypeCurrentTime
+                    else -> ViewTypeSchedule
                 }
             }
         }

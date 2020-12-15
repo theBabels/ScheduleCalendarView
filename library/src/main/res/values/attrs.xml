@@ -10,6 +10,7 @@
         <attr name="gridLineColor" format="color|reference" />
         <attr name="timeScaleWidth" format="dimension|reference" />
         <attr name="dateLabelHeight" format="dimension|reference" />
+        <attr name="currentTimeHeight" format="dimension|reference" />
     </declare-styleable>
     <declare-styleable name="DateLabelView" parent="ScheduleCalendarViewBase">
         <attr name="dayOfWeekTextColor" format="color|reference" />
@@ -21,7 +22,11 @@
         <attr name="todayCirclePadding" format="dimension|reference" />
     </declare-styleable>
     <declare-styleable name="TimeScaleView" parent="ScheduleCalendarViewBase" />
+    <declare-styleable name="CurrentTimeView" parent="ScheduleCalendarViewBase">
+        <attr name="lineColor" format="color|reference" />
+    </declare-styleable>
     <attr name="scv_rowHeight" format="dimension|reference" />
     <attr name="dateLabelView" format="reference" />
     <attr name="timeScaleView" format="reference" />
+    <attr name="currentTimeView" format="reference" />
 </resources>

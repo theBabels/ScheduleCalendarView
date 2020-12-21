@@ -8,9 +8,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.thebabels.schedulecalendarview.*
+import co.thebabels.schedulecalendarview.extention.clearToMidnight
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
@@ -37,7 +37,8 @@ class MainActivity : AppCompatActivity() {
         todayButton.setOnClickListener {
             Log.d("MainActivity", "onClickTodayButton")
             adapter.getDateLabelPosition()?.let {
-                recyclerView.smoothScrollToPosition(it) }
+                recyclerView.smoothScrollToPosition(it)
+            }
         }
 
 
@@ -48,7 +49,7 @@ class MainActivity : AppCompatActivity() {
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }
-        val days = DateScheduleItem.firstDayOfWeek().nextDays(30, true)
+        val days = DateScheduleItem.firstDayOfWeek().nextDays(90, true)
         Log.d("DEBUG", "${days.map { it.dateString() }}")
         adapter.addItems(
                 *days.toTypedArray(),
@@ -74,6 +75,18 @@ class MainActivity : AppCompatActivity() {
                 ),
                 CurrentTimeScheduleItem.now(),
         )
+
+        val touchHelper = ScheduleCalendarItemTouchHelper(object : ScheduleCalendarItemTouchHelper.Callback() {
+            override fun isEditable(viewHolder: RecyclerView.ViewHolder): Boolean {
+                return viewHolder is TextScheduleAdapter.ViewHolder
+            }
+
+            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, start: Date, end: Date): Boolean {
+                adapter.updateItem(viewHolder.adapterPosition, start, end)
+                return true
+            }
+        })
+        touchHelper.attachToRecyclerView(recyclerView)
     }
 
     data class TextScheduleItem(val text: String, val start: Date, val end: Date) : ScheduleItem {
@@ -83,6 +96,10 @@ class MainActivity : AppCompatActivity() {
 
         override fun end(): Date {
             return this.end
+        }
+
+        override fun update(start: Date, end: Date): ScheduleItem {
+            return this.copy(start = start, end = end)
         }
     }
 
@@ -130,14 +147,14 @@ class MainActivity : AppCompatActivity() {
                         lm.getPosition(it)
                     }
                 }?.let { adapterPosition ->
-                    if (adapterPosition < 30 && dx < 0) {
+                    if (adapterPosition < 60 && dx < 0) {
                         recyclerView.post {
-                            adapter.addPreviousDateLabelItems(10)
+                            adapter.addPreviousDateLabelItems(30)
                         }
                     }
-                    if (adapterPosition > adapter.itemCount - 15 && dx > 0) {
+                    if (adapterPosition > adapter.itemCount - 60 && dx > 0) {
                         recyclerView.post {
-                            adapter.addFollowingDateLabelItems(10)
+                            adapter.addFollowingDateLabelItems(30)
                         }
                     }
                 }

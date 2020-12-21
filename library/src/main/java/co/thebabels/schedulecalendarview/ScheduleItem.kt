@@ -17,6 +17,11 @@ interface ScheduleItem {
     fun end(): Date
 
     /**
+     * Returns a new [ScheduleItem] that [start] and [end] is updated.
+     */
+    fun update(start: Date, end: Date): ScheduleItem
+
+    /**
      * @return  the value <code>0</code> if the argument Date is equal to
      *          this Date; a value less than <code>0</code> if this Date
      *          is before the Date argument; and a value greater than

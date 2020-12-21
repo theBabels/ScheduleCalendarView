@@ -1,5 +1,6 @@
 package co.thebabels.schedulecalendarview
 
+import android.util.Log
 import co.thebabels.schedulecalendarview.extention.clearToMidnight
 import co.thebabels.schedulecalendarview.extention.dateDiff
 import co.thebabels.schedulecalendarview.extention.toCalendar
@@ -117,6 +118,11 @@ data class DateScheduleItem(private val cal: Calendar) : ScheduleItem {
 
     override fun end(): Date {
         return cal.time
+    }
+
+    override fun update(start: Date, end: Date): ScheduleItem {
+        Log.w("DateScheduleItem", "DateScheduleItem.update is not implemented")
+        return this
     }
 
     fun dateString(): String {

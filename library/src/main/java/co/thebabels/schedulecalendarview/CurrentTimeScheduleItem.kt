@@ -17,4 +17,8 @@ data class CurrentTimeScheduleItem(private val date: Date) : ScheduleItem {
     override fun end(): Date {
         return this.date
     }
+
+    override fun update(start: Date, end: Date): ScheduleItem {
+        return copy(date = start)
+    }
 }

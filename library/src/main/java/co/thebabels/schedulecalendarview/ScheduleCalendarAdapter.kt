@@ -1,5 +1,6 @@
 package co.thebabels.schedulecalendarview
 
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -40,6 +41,19 @@ abstract class ScheduleCalendarAdapter() :
         val position = findListPositionToBeInserted(item)
         this.items.add(position, item)
         notifyItemInserted(position)
+    }
+
+    fun updateItem(position: Int, start: Date, end: Date) {
+        val item = getItem(position)?.update(start, end) ?: return
+        items.removeAt(position)
+        val nextPosition = findListPositionToBeInserted(item)
+        this.items.add(nextPosition, item)
+        if (nextPosition == position) {
+            notifyItemChanged(position)
+        } else {
+            notifyItemChanged(position)
+            notifyItemMoved(position, nextPosition)
+        }
     }
 
     /**

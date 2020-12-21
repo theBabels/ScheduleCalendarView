@@ -44,6 +44,10 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     private var firstVisibleItemPosition: Int = -1
     private var lastVisibleItemPosition: Int = 0
 
+    // These are scroll positions to be temporarily remembered during re-layout.
+    private var tmpVerticalScroll: Int? = null
+    private var tmpFirstDateLabelPosition: Int? = null
+
     private val lastScheduleItemAdapterPosition: Int
         get() = itemCount - 1 - FIX_VIEW_OFFSET
 
@@ -69,6 +73,10 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             return null
         }
         return dateLookUp.lookUpStart(firstVisibleItemPosition)
+    }
+
+    internal fun getFirstDateLabelX(): Float? {
+        return getFirstDateLabel()?.x
     }
 
     override fun computeScrollVectorForPosition(targetPosition: Int): PointF? {
@@ -111,13 +119,16 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             // update visible item position because the adapter size is changed.
             firstVisibleItemPosition = getChildAt(0)?.let { getPosition(it) }
                     ?: firstVisibleItemPosition
-            lastVisibleItemPosition = getChildAt(childCount - 1 - FIX_VIEW_OFFSET)?.let { getPosition(it) }
+            lastVisibleItemPosition = getChildAt(childCount - 1 - fixViewCount())?.let { getPosition(it) }
                     ?: lastVisibleItemPosition
-            return
+            // save the current vertical scroll position until the re-layout is finished.
+            tmpVerticalScroll = currentVerticalScroll()
+            tmpFirstDateLabelPosition = getFirstDateLabelX()?.toInt()
+            Log.d(TAG, "onLayoutChildren: visiblePosition is updated: first='${firstVisibleItemPosition}', last='${lastVisibleItemPosition}', verticalScrollPosition='${tmpVerticalScroll}', tmpFirstDateLabelPosition='${tmpFirstDateLabelPosition}'")
         }
         recycler?.let {
             detachAndScrapAttachedViews(it)
-            for (i in 0 until itemCount - FIX_VIEW_OFFSET) {
+            for (i in max(firstVisibleItemPosition, 0) until itemCount - FIX_VIEW_OFFSET) {
                 val right = addChild(i, it, getFirstDateLabel())
                 lastVisibleItemPosition = i
                 if (right > width - paddingRight && dateLookUp.isDateLabel(i + 1)) {
@@ -131,6 +142,10 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
                 listener?.onFirstItemChanged(firstVisibleItemPosition, it)
             }
         }
+
+        // remove the temporary vertical scroll position when the layout is finished.
+        tmpVerticalScroll = null
+        tmpFirstDateLabelPosition = null
     }
 
     // add child view of item at given adapter [position], and return the view 'right' position.
@@ -148,7 +163,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             if (position > lastScheduleItemAdapterPosition) {
                 addView(v, childCount - (position - (itemCount)))
             } else {
-                addView(v, childCount - FIX_VIEW_OFFSET)
+                addView(v, childCount - fixViewCount())
             }
         } else {
             if (position < firstVisibleItemPosition) {
@@ -170,7 +185,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
                 measureChild(v, 0, 0)
                 // calculate layout position based on first
                 val left = 0
-                val top = headerOffset()
+                val top = headerOffset() + (tmpVerticalScroll ?: 0)
                 val right = left + getDecoratedMeasuredWidth(v)
                 val bottom = top + getDecoratedMeasuredHeight(v)
 
@@ -243,7 +258,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     ): Int {
         // first child of 'DateLabelView'
         val firstView = getFirstDateLabel() ?: return 0
-        val lastItem = getChildAt(childCount - 1 - FIX_VIEW_OFFSET)
+        val lastItem = getChildAt(childCount - 1 - fixViewCount())
         val firstLeft = getDecoratedLeft(firstView)
         val lastRight = lastItem?.let { getDecoratedRight(it) } ?: 0
         val scrollAmount = calculateHorizontalScrollAmount(dx, firstLeft, lastRight)
@@ -312,8 +327,8 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         // calculate layout position based on first
         val isFirstDateLabelInitialization = anchorDateLabel == null
         if (isFirstDateLabelInitialization) {
-            firstVisibleItemPosition = 0
-            lastVisibleItemPosition = 0
+            firstVisibleItemPosition = max(firstVisibleItemPosition, 0)
+            lastVisibleItemPosition = max(lastVisibleItemPosition, 0)
         }
         val rowWidth = rowWidth()
         val anchorDateLabelLp = anchorDateLabel?.layoutParams?.let { it as LayoutParams }
@@ -321,7 +336,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         val left = anchorDateLabel?.let { anchorLabel ->
             getDecoratedRight(anchorLabel) + rowWidth * (lp.start?.dateDiff(anchorDateLabelStart!!)
                     ?.let { it - 1 } ?: 0)
-        } ?: timeScaleWidth
+        } ?: tmpFirstDateLabelPosition ?: timeScaleWidth
         val top = if (lp.isDateLabel) {
             0
         } else {
@@ -437,11 +452,20 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         return (width - timeScaleWidth) / daysCount
     }
 
+    private fun fixViewCount(): Int {
+        return if (getChildAt(childCount - 1) is TimeScaleView) {
+            1
+        } else {
+            0
+        }
+    }
+
     /**
      * Return current vertical scroll distance.
      */
-    private fun currentVerticalScroll(): Int {
-        return getTimeScale()?.let { getDecoratedTop(it) - headerOffset() } ?: 0
+    internal fun currentVerticalScroll(): Int {
+        return getTimeScale()?.let { getDecoratedTop(it) - headerOffset() } ?: tmpVerticalScroll
+        ?: 0
     }
 
     private fun headerOffset(): Int {

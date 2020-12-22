@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="item_touch_helper_max_drag_scroll_per_frame">60dp</dimen>
-    <dimen name="edge_touch_size">16dp</dimen>
+    <dimen name="edge_touch_size">20dp</dimen>
 </resources>

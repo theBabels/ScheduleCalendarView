@@ -9,6 +9,7 @@ import android.view.*
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.animation.Interpolator
 import androidx.core.view.GestureDetectorCompat
+import androidx.core.view.ViewCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ViewDropHandler
 import androidx.recyclerview.widget.RecyclerView
@@ -132,19 +133,20 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
      * When user drags a view to the edge, we start scrolling the LayoutManager as long as View
      * is partially out of bounds.
      */
-    /* synthetic access */ val scrollRunnable: Runnable = Runnable {
-        // TODO implement
-//            Log.d(TAG, "ScrollRunnable")
-//            selected?.let { selected ->
-//                if (scrollIfNecessary()) {
-//                    // TODO move selected item because it might be lost during scrolling
-////                    moveIfNecessary(selected)
-//                }
-//                recyclerView?.let { recyclerView ->
-//                    recyclerView.removeCallbacks(this)
-//                    ViewCompat.postOnAnimation(recyclerView, this)
-//                }
-//            }
+    /* synthetic access */ val scrollRunnable: Runnable = object : Runnable {
+        override fun run() {
+            Log.d(TAG, "ScrollRunnable")
+            selected?.let { selected ->
+                if (scrollIfNecessary()) {
+                    // move selected item because it might be lost during scrolling
+                    moveIfNecessary(selected)
+                }
+                recyclerView?.let { recyclerView ->
+                    recyclerView.removeCallbacks(this)
+                    ViewCompat.postOnAnimation(recyclerView, this)
+                }
+            }
+        }
     }
 
     /**
@@ -503,7 +505,7 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
      * If user drags the view to the edge, trigger a scroll if necessary.
      */
     fun scrollIfNecessary(): Boolean {
-        if (selected == null) {
+        if (selected == null || actionState != ACTION_STATE_DRAG) {
             mDragScrollStartTimeInMs = Long.MIN_VALUE
             return false
         }
@@ -513,23 +515,25 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
         val scrollDuration: Long = if (mDragScrollStartTimeInMs
                 == Long.MIN_VALUE) 0 else now - mDragScrollStartTimeInMs
         val lm: RecyclerView.LayoutManager = recyclerView.layoutManager ?: return false
-        val tmpRect = this.tmpRect ?: Rect().apply {
-            lm.calculateItemDecorationsForChild(selected.itemView, this)
-        }
+        val tmpRect = this.tmpRect ?: Rect()
+        lm.calculateItemDecorationsForChild(selected.itemView, tmpRect)
         var scrollX = 0
         var scrollY = 0
-//        if (lm.canScrollHorizontally()) {
-//            val curX = (selectedStartX + dx).toInt()
-//            val leftDiff: Int = curX - tmpRect.left - recyclerView.paddingLeft
-//            if (dx < 0 && leftDiff < 0) {
-//                scrollX = leftDiff
-//            } else if (dx > 0) {
-//                val rightDiff: Int = (curX + selected.itemView.width + tmpRect.right - (recyclerView.width - recyclerView.paddingRight))
-//                if (rightDiff > 0) {
-//                    scrollX = rightDiff
-//                }
-//            }
-//        }
+        if (lm.canScrollHorizontally()) {
+            // prepare offset to determine that the selected position has reached the edge.
+            // This offset is required because the dx can only be moved to the position of the currently displayed date in a calendar.
+            val offset = selected.itemView.width
+            val curX = (selectedStartX + dx).toInt()
+            val leftDiff: Int = curX - tmpRect.left - recyclerView.paddingLeft - offset
+            if (dx <= 0 && leftDiff < 0) {
+                scrollX = leftDiff
+            } else if (dx >= 0) {
+                val rightDiff: Int = (curX + selected.itemView.width + tmpRect.right - (recyclerView.width - recyclerView.paddingRight)) + offset
+                if (rightDiff > 0) {
+                    scrollX = rightDiff
+                }
+            }
+        }
         if (lm.canScrollVertically()) {
             val curY = (selectedStartY + dy).toInt()
             val topDiff: Int = curY - tmpRect.top - recyclerView.getPaddingTop()
@@ -712,39 +716,13 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
     }
 
     fun updateDxDy(ev: MotionEvent, pointerIndex: Int) {
+        val lm = recyclerView?.layoutManager?.let { it as ScheduleCalendarLayoutManager } ?: return
         val x = ev.getX(pointerIndex)
-        val y = ev.getY(pointerIndex)
-
-        // Calculate the distance moved
-        dx = (x - initialTouchX).let { tmpDx ->
-            columnWidth()?.let { colWidth ->
-                if (tmpDx < 0) {
-                    ((tmpDx - colWidth / 2) / colWidth).toInt() * colWidth
-                } else {
-                    ((tmpDx + colWidth / 2) / colWidth).toInt() * colWidth
-                }
-            } ?: tmpDx
-        }
-        dy = (y - initialTouchY).let { tmpDy ->
-            rowHeight()?.let { rowHeight ->
-                rowHeight * (callback.minuteSpan() / 60f)
-            }?.let { verticalSpan ->
-                if (tmpDy < 0) {
-                    ((tmpDy - verticalSpan / 2) / verticalSpan).toInt() * verticalSpan
-                } else {
-                    ((tmpDy + verticalSpan / 2) / verticalSpan).toInt() * verticalSpan
-                }
-            } ?: tmpDy
-        }
-        Log.d(TAG, "updateDxDy: x='${x}', y='${y}' dx='${dx}', dy='${dy}'")
-    }
-
-    private fun columnWidth(): Float? {
-        return recyclerView?.let { if (it is ScheduleCalendarRecyclerView) it.columnWidth() else null }
-    }
-
-    private fun rowHeight(): Float? {
-        return recyclerView?.let { if (it is ScheduleCalendarRecyclerView) it.rowHeight() else null }
+        val tmpDy = ev.getY(pointerIndex) - initialTouchY
+        dx = lm.getValidPositionX(x)?.let { it - selectedStartX } ?: return
+        dy = lm.getValidPositionY(selectedStartY + tmpDy, callback.minuteSpan())?.let { it - selectedStartY }
+                ?: return
+        Log.d(TAG, "updateDxDy: dx='${dx}', dy='${dy}'")
     }
 
     /**

@@ -99,6 +99,31 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         return cal.time
     }
 
+    /**
+     * Returns the closest x position from the specified [x] position
+     * that is suitable for placing the item.
+     */
+    fun getValidPositionX(x: Float): Float? {
+        val firstDateLabel = getFirstDateLabel() ?: return null
+        val firstDateLabelLeft = getDecoratedLeft(firstDateLabel)
+
+        // date (Eliminate the rounding error of the decimal point by moving it by '1' to the right.)
+        val dateDiff = (x - firstDateLabelLeft + 1).toInt() / rowWidth()
+
+        return firstDateLabelLeft + (dateDiff * rowWidth()).toFloat()
+    }
+
+    /**
+     * Returns the closest y position from the specified [y] position
+     * that is suitable for placing the item.
+     */
+    fun getValidPositionY(y: Float, minuteSpan: Int): Float? {
+        val timeScale = getTimeScale() ?: return null
+        val verticalSpan = rowHeight * minuteSpan / 60f
+        val minSpanDiff = ((y - getDecoratedTop(timeScale)) / verticalSpan).toInt()
+        return getDecoratedTop(timeScale) + minSpanDiff * verticalSpan
+    }
+
     internal fun getFirstDateLabelX(): Float? {
         return getFirstDateLabel()?.x
     }

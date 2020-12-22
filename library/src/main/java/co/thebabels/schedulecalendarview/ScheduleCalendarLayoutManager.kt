@@ -10,9 +10,7 @@ import android.view.ViewGroup.MarginLayoutParams
 import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.SmoothScroller.ScrollVectorProvider
-import co.thebabels.schedulecalendarview.extention.dateDiff
-import co.thebabels.schedulecalendarview.extention.hourDiff
-import co.thebabels.schedulecalendarview.extention.hourOfDay
+import co.thebabels.schedulecalendarview.extention.*
 import co.thebabels.schedulecalendarview.view.TimeScaleView
 import java.util.*
 import kotlin.math.max
@@ -73,6 +71,32 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             return null
         }
         return dateLookUp.lookUpStart(firstVisibleItemPosition)
+    }
+
+    /**
+     * Return date at given position.
+     */
+    fun getDateAt(x: Int, y: Int): Date? {
+        val firstDateLabel = getFirstDateLabel() ?: return null
+        val firstDateLabelLP = firstDateLabel.layoutParams as LayoutParams
+        val firstDateLabelLeft = getDecoratedLeft(firstDateLabel)
+        val timeScale = getTimeScale() ?: return null
+
+
+        val cal = firstDateLabelLP.start?.toCalendar() ?: return null
+
+        // date (Eliminate the rounding error of the decimal point by moving it by '1' to the right.)
+        val dateDiff = (x - firstDateLabelLeft + 1) / rowWidth()
+        cal.add(Calendar.DATE, dateDiff)
+        cal.clearToMidnight()
+
+        // time
+        val minute = (((y - getDecoratedTop(timeScale)) / rowHeight) * 60).toInt()
+        cal.add(Calendar.MINUTE, minute)
+
+        Log.v(TAG, "getDateAt: x='${x}', y='${y}', dateDiff='${dateDiff}', minute='${minute}', anchorDate='${firstDateLabelLP.start}', anchorDateLeft='${firstDateLabelLeft}', columnWidth='${rowWidth()}'")
+
+        return cal.time
     }
 
     internal fun getFirstDateLabelX(): Float? {

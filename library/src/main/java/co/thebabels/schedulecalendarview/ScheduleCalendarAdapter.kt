@@ -1,6 +1,5 @@
 package co.thebabels.schedulecalendarview
 
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -20,6 +19,8 @@ abstract class ScheduleCalendarAdapter() :
         const val ViewTypeDateLabel = 101
         const val ViewTypeCurrentTime = 102
         const val ViewTypeSchedule = 110
+
+        const val PayloadMove = "Move"
     }
 
     private val items: MutableList<ScheduleItem> = mutableListOf()
@@ -49,9 +50,10 @@ abstract class ScheduleCalendarAdapter() :
         val nextPosition = findListPositionToBeInserted(item)
         this.items.add(nextPosition, item)
         if (nextPosition == position) {
-            notifyItemChanged(position)
+            // Pass the 'payload'. Without this, the view will be completely updated, which will cause the view to be destroyed and the selection in ScheduleCalendarItemTouchHelper to be deselected.
+            // FIXME Should we have a dedicated method that is called from ItemTouchHelper.Callback?
+            notifyItemChanged(position, PayloadMove)
         } else {
-            notifyItemChanged(position)
             notifyItemMoved(position, nextPosition)
         }
     }
@@ -160,8 +162,11 @@ abstract class ScheduleCalendarAdapter() :
         }
     }
 
-
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        onBindViewHolder(holder, position, mutableListOf())
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: MutableList<Any>) {
         when {
             position >= items.size -> Unit
             else -> {

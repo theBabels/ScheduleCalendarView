@@ -25,9 +25,13 @@ fun Date.dateDiff(target: Date): Int {
 fun Date.hourDiff(target: Date): Float {
     val thisCal = toCalendar()
     val targetCal = target.toCalendar()
-    return ((thisCal.time.time - targetCal.time.time).toFloat() / HOUR).apply {
-        Log.d("TAG", "hourDiff='${this}'")
-    }
+    return ((thisCal.time.time - targetCal.time.time).toFloat() / HOUR)
+}
+
+fun Date.minuteDiff(target: Date): Float {
+    val thisCal = toCalendar()
+    val targetCal = target.toCalendar()
+    return ((thisCal.time.time - targetCal.time.time).toFloat() / MINUTE)
 }
 
 fun Date.hourOfDay(): Float {

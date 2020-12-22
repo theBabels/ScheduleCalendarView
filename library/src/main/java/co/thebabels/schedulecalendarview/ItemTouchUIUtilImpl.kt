@@ -22,8 +22,23 @@ internal class ItemTouchUIUtilImpl : ItemTouchUIUtil {
                 }
             }
         }
-        view.translationX = dX
-        view.translationY = dY
+        when (actionState) {
+            ScheduleCalendarItemTouchHelper.ACTION_STATE_DRAG -> {
+                view.translationX = dX
+                view.translationY = dY
+            }
+            ScheduleCalendarItemTouchHelper.ACTION_STATE_DRAG_START -> {
+                // Top position changes, so position correction is needed to make it look good.
+                // If the view is dragged downward beyond the height of the view, it will be fixed at the bottom(=schedule end) position,
+                // so there is no need for translation.
+                if (dY < view.height) {
+                    view.translationY = dY
+                }
+            }
+            ScheduleCalendarItemTouchHelper.ACTION_STATE_DRAG_END -> {
+                // Do nothing
+            }
+        }
     }
 
     override fun onDrawOver(c: Canvas, recyclerView: RecyclerView, view: View, dX: Float, dY: Float,

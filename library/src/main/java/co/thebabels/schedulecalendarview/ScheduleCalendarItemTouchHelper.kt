@@ -9,14 +9,15 @@ import android.view.*
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.animation.Interpolator
 import androidx.core.view.GestureDetectorCompat
-import androidx.core.view.ViewCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ViewDropHandler
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.OnItemTouchListener
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import co.thebabels.schedulecalendarview.extention.minuteDiff
 import co.thebabels.schedulecalendarview.extention.toCalendar
 import java.util.*
+import kotlin.math.max
 
 /**
  * This is a utility class to add editing schedule items support to [ScheduleCalendarRecyclerView].
@@ -103,6 +104,8 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
 
     private var selectedStartY = 0f
 
+    private var selectedEndY = 0f
+
     /**
      * The pointer we are tracking.
      */
@@ -155,17 +158,31 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
     private var mItemTouchHelperGestureListener: ItemTouchHelperGestureListener? = null
 
     private val onItemTouchListener: OnItemTouchListener = object : OnItemTouchListener {
+
+        private val EdgeTouchDetectionRatio = 0.1f
+        private var cachedEdgeTouchSize: Int? = null
+
         override fun onInterceptTouchEvent(recyclerView: RecyclerView,
                                            event: MotionEvent): Boolean {
             Log.d(TAG, "onInterceptTouchEvent: x:'${event.x}', y:'${event.y}', '${event}'")
             gestureDetector?.onTouchEvent(event)
-            val action = event.actionMasked
-            if (action == MotionEvent.ACTION_DOWN) {
-                mActivePointerId = event.getPointerId(0)
-                initialTouchX = event.x
-                initialTouchY = event.y
-                if (selected == null) {
-                    // TODO recover animation
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    mActivePointerId = event.getPointerId(0)
+                    initialTouchX = event.x
+                    initialTouchY = event.y
+                    selected?.let { selected ->
+                        // start editing based on the tapped position.
+                        checkStartDragging(selected.itemView, event.x.toInt(), event.y.toInt())?.let { nextActionState ->
+                            // select with action state
+                            Log.v(TAG, "onInterceptTouchEvent: start dragging: nextActionState='${nextActionState}'")
+                            select(selected, nextActionState)
+                        } ?: run {
+                            // if touched location is outside of selected view, clear selection.
+                            select(null, ACTION_STATE_IDLE)
+                        }
+                    } ?: {
+                        // TODO recover animation?
 //                    val animation: RecoverAnimation = findAnimation(event)
 //                    if (animation != null) {
 //                        mInitialTouchX -= animation.mX
@@ -177,30 +194,42 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
 //                        select(animation.mViewHolder, animation.mActionState)
 //                        updateDxDy(event, mSelectedFlags, 0)
 //                    }
-                } else {
-                    // start editing based on the tapped position.
-                    val childView = recyclerView.findChildViewUnder(event.x, event.y)
-                    if (childView != null) {
-                        if (childView == selected?.itemView) {
-                            Log.d(TAG, "start dragging")
-                            // TODO drag top
-
-                            // TODO drag bottom
-
-                            // TODO drag
-                            select(selected, ACTION_STATE_DRAG)
-                        } else {
-                            // TODO clear current selection and prepare next selection?
-                        }
-                    } else {
-                        // clear selection if touch on a blank space. TODO recover animation?
-                        select(null, ACTION_STATE_IDLE)
                     }
                 }
-            } else if (action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP) {
-                mActivePointerId = ACTIVE_POINTER_ID_NONE
+                MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
+                    mActivePointerId = ACTIVE_POINTER_ID_NONE
+                }
             }
             return selected != null
+        }
+
+        /**
+         * Returns the next action state based on the selected [view] and location information x, y of a touch event.
+         * Null will be returned if touched location is out of the [view].
+         *
+         * @param view  view of [ScheduleCalendarItemTouchHelper.selected]
+         * @param x x location of a touch event
+         * @param y y location of a touch event
+         * @return one of [ACTION_STATE_DRAG], [ACTION_STATE_DRAG_START], [ACTION_STATE_DRAG_END] or null. null means touched location is out of the [view].
+         */
+        private fun checkStartDragging(view: View, x: Int, y: Int): Int? {
+            if (cachedEdgeTouchSize == null) {
+                cachedEdgeTouchSize = view.resources.getDimensionPixelSize(R.dimen.edge_touch_size)
+            }
+            return cachedEdgeTouchSize?.let { offset ->
+                if (y < view.top - offset || y > view.bottom + offset || x < view.left - offset || x > view.right + offset) {
+                    null
+                } else {
+                    val innerOffset = if (view.height > offset * 5) offset else max(view.height - (offset * 3), 0)
+                    if (y < view.top + innerOffset) {
+                        ACTION_STATE_DRAG_START
+                    } else if (y > view.bottom - innerOffset) {
+                        ACTION_STATE_DRAG_END
+                    } else {
+                        ACTION_STATE_DRAG
+                    }
+                }
+            }
         }
 
         override fun onTouchEvent(recyclerView: RecyclerView, event: MotionEvent) {
@@ -219,17 +248,17 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
                         when (actionState) {
                             ACTION_STATE_DRAG -> {
                                 updateDxDy(event, activePointerIndex)
-                                // In the original ItemTouchHelper, 'moveIfNecessary' is called here to move the item. On the other hand, in this ItemTouchHelper, the move is done when ACTION_UP is executed.
+                                moveIfNecessary(viewHolder)
                                 recyclerView.removeCallbacks(scrollRunnable)
                                 scrollRunnable.run()
                                 recyclerView.invalidate()
                             }
                             ACTION_STATE_DRAG_START,
                             ACTION_STATE_DRAG_END -> {
-                                // TODO update 'start' or 'end'.
-                                // TODO run scroll runnable
-//                                mRecyclerView.removeCallbacks(mScrollRunnable)
-//                                mScrollRunnable.run()
+                                updateDxDy(event, activePointerIndex)
+                                moveIfNecessary(viewHolder)
+                                recyclerView.removeCallbacks(scrollRunnable)
+                                scrollRunnable.run()
                                 recyclerView.invalidate()
                             }
                         }
@@ -455,6 +484,7 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
 //                    shr mActionState * ItemTouchHelper.DIRECTION_FLAG_COUNT)
             this.selectedStartX = selected.itemView.left.toFloat()
             this.selectedStartY = selected.itemView.top.toFloat()
+            this.selectedEndY = selected.itemView.bottom.toFloat()
             this.selected = selected
             if (actionState == ACTION_STATE_DRAG || actionState == ACTION_STATE_DRAG_START || actionState == ACTION_STATE_DRAG_END) {
                 this.selected?.itemView?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
@@ -536,61 +566,74 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
 
 
     /**
-     * Checks if we should swap w/ another view holder.
+     * Checks if we should move the view holder.
      */
     fun moveIfNecessary(viewHolder: RecyclerView.ViewHolder) {
         val recyclerView = this.recyclerView ?: return
+        val lm = recyclerView.layoutManager as ScheduleCalendarLayoutManager
         if (recyclerView.isLayoutRequested) {
             return
         }
-        if (actionState != ACTION_STATE_DRAG) {
-            return
-        }
-//        // TODO check threshold
-//        val threshold: Float = callback.getMoveThreshold(viewHolder)
-        val x = (selectedStartX + dx).toInt()
-        val y = (selectedStartY + dy).toInt()
-//        if (Math.abs(y - viewHolder.itemView.top) < viewHolder.itemView.height * threshold
-//                && Math.abs(x - viewHolder.itemView.left)
-//                < viewHolder.itemView.width * threshold) {
-//            return
-//        }
-//        val swapTargets: List<RecyclerView.ViewHolder> = findSwapTargets(viewHolder)
-//        if (swapTargets.size == 0) {
-//            return
-//        }
-        // may swap.
-//        val target: RecyclerView.ViewHolder? = callback.chooseDropTarget(viewHolder, listOf(), x, y)
-//        if (target == null) {
-//            mSwapTargets.clear()
-//            mDistances.clear()
-//            return
-//        }
+        when (actionState) {
+            ACTION_STATE_DRAG -> {
+                // In the original ItemTouchHelper, the threshold is checked and the target to be swapped is selected here,
+                // but this implmentation, the item is moved to the current position by directly referencing the LayoutManager.
+                val lp = viewHolder.itemView.layoutParams?.let { if (it is ScheduleCalendarLayoutManager.LayoutParams) it else null }
+                        ?: return
+                val x = (selectedStartX + dx).toInt()
+                val y = (selectedStartY + dy).toInt()
+                val start = lm.getDateAt(x, y) ?: return
+                val end = start.toCalendar().apply {
+                    add(Calendar.MINUTE, lp.end?.minuteDiff(lp.start!!)?.toInt() ?: 0)
+                }.time
 
-//        val toPosition = target.adapterPosition
-//        val fromPosition = viewHolder.adapterPosition
-        val lp = viewHolder.itemView.layoutParams?.let { if (it is ScheduleCalendarLayoutManager.LayoutParams) it else null }
-                ?: return
-        val dateDiff = columnWidth()?.let { dx / it }?.toInt() ?: 0
-        val minSpan = callback.minuteSpan()
-        val minuteDiff = (((dy / lp.rowHeight) * 60).toInt() / minSpan) * minSpan
+                // skip if nothing changed
+                if (lp.start?.equals(start) == true && lp.end?.equals(end) == true) {
+                    return
+                }
+                if (callback.onMove(recyclerView, viewHolder, start, end)) {
+//                    // keep target visible
+//                    callback.onMoved(recyclerView, viewHolder, fromPosition, target, toPosition, x, y)
+                }
+            }
+            ACTION_STATE_DRAG_START -> {
+                val lp = viewHolder.itemView.layoutParams?.let { if (it is ScheduleCalendarLayoutManager.LayoutParams) it else null }
+                        ?: return
+                val x = selectedStartX.toInt()
+                val y = (selectedStartY + dy).toInt()
+                val end = lp.end ?: return
+                val start = lm.getDateAt(x, y)?.let {
+                    if (it.before(end)) it else end
+                } ?: return
 
-        // skip if nothing has changed.
-        if (dateDiff == 0 && minuteDiff == 0) {
-            return
-        }
-        val start = lp.start?.toCalendar()?.apply {
-            add(Calendar.DATE, dateDiff)
-            add(Calendar.MINUTE, minuteDiff)
-        }?.time ?: return
-        val end = lp.end?.toCalendar()?.apply {
-            add(Calendar.DATE, dateDiff)
-            add(Calendar.MINUTE, minuteDiff)
-        }?.time ?: return
+                // skip if nothing changed
+                if (lp.start?.equals(start) == true && lp.end?.equals(end) == true) {
+                    return
+                }
+                if (callback.onMove(recyclerView, viewHolder, start, end)) {
+//                    // keep target visible
+//                    callback.onMoved(recyclerView, viewHolder, fromPosition, target, toPosition, x, y)
+                }
+            }
+            ACTION_STATE_DRAG_END -> {
+                val lp = viewHolder.itemView.layoutParams?.let { if (it is ScheduleCalendarLayoutManager.LayoutParams) it else null }
+                        ?: return
+                val x = selectedStartX.toInt()
+                val y = (selectedEndY + dy).toInt()
+                val start = lp.start ?: return
+                val end = lm.getDateAt(x, y)?.let {
+                    if (it.after(start)) it else start
+                } ?: return
 
-        if (callback.onMove(recyclerView, viewHolder, start, end)) {
-//            // keep target visible
-//            callback.onMoved(recyclerView, viewHolder, fromPosition, target, toPosition, x, y)
+                // skip if nothing changed
+                if (lp.start?.equals(start) == true && lp.end?.equals(end) == true) {
+                    return
+                }
+                if (callback.onMove(recyclerView, viewHolder, start, end)) {
+//                    // keep target visible
+//                    callback.onMoved(recyclerView, viewHolder, fromPosition, target, toPosition, x, y)
+                }
+            }
         }
     }
 
@@ -602,8 +645,10 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
 //        removeChildDrawingOrderCallbackIfNecessary(view)
         val holder: ViewHolder = recyclerView?.getChildViewHolder(view) ?: return
         if (selected != null && holder === selected) {
+            Log.d(TAG, "onChildViewDetachedFromWindow: clear selection")
             select(null, ItemTouchHelper.ACTION_STATE_IDLE)
         } else {
+            Log.d(TAG, "onChildViewDetachedFromWindow: end recover animation")
             endRecoverAnimation(holder, false) // this may push it into pending cleanup list.
 //            if (mPendingCleanup.remove(holder.itemView)) {
             recyclerView?.let { callback.clearView(it, holder) }

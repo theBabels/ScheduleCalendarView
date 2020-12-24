@@ -7,6 +7,7 @@ import android.view.View
 import androidx.core.view.ViewCompat
 import androidx.recyclerview.widget.ItemTouchUIUtil
 import androidx.recyclerview.widget.RecyclerView
+import co.thebabels.schedulecalendarview.view.DateLabelView
 
 internal class ItemTouchUIUtilImpl : ItemTouchUIUtil {
     override fun onDraw(c: Canvas, recyclerView: RecyclerView, view: View, dX: Float, dY: Float,
@@ -22,10 +23,13 @@ internal class ItemTouchUIUtilImpl : ItemTouchUIUtil {
                 }
             }
         }
+        val lp = view.layoutParams as ScheduleCalendarLayoutManager.LayoutParams
         when (actionState) {
             ScheduleCalendarItemTouchHelper.ACTION_STATE_DRAG -> {
                 view.translationX = dX
-                view.translationY = dY
+                if (!lp.isStartSplit) {
+                    view.translationY = dY
+                }
             }
             ScheduleCalendarItemTouchHelper.ACTION_STATE_DRAG_START -> {
                 // Top position changes, so position correction is needed to make it look good.
@@ -68,6 +72,10 @@ internal class ItemTouchUIUtilImpl : ItemTouchUIUtil {
             for (i in 0 until childCount) {
                 val child = recyclerView.getChildAt(i)
                 if (child === itemView) {
+                    continue
+                }
+                val lp = child.layoutParams
+                if (lp is ScheduleCalendarLayoutManager.LayoutParams && lp.isDateLabel) {
                     continue
                 }
                 val elevation = ViewCompat.getElevation(child)

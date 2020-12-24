@@ -1,5 +1,6 @@
 package co.thebabels.schedulecalendarview
 
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -45,17 +46,115 @@ abstract class ScheduleCalendarAdapter() :
     }
 
     fun updateItem(position: Int, start: Date, end: Date) {
-        val item = getItem(position)?.update(start, end) ?: return
-        items.removeAt(position)
-        val nextPosition = findListPositionToBeInserted(item)
-        this.items.add(nextPosition, item)
-        if (nextPosition == position) {
-            // Pass the 'payload'. Without this, the view will be completely updated, which will cause the view to be destroyed and the selection in ScheduleCalendarItemTouchHelper to be deselected.
-            // FIXME Should we have a dedicated method that is called from ItemTouchHelper.Callback?
-            notifyItemChanged(position, PayloadMove)
+        // 1. update original item
+        val item = getItem(position) ?: return
+        val updatedItem = if (item.getOrigin() == null) {
+            item.update(start, end)
         } else {
-            notifyItemMoved(position, nextPosition)
+            item.reflectUpdateToOrigin(start, end)
         }
+
+        // 2. find item positions with same key by given position.
+        val oldItems = getItemsWithSameKey(position)
+
+        // 3. split the updated original item
+        val splitItems = updatedItem.splitAtMidnight()
+
+        // 4. notify changes
+        if (splitItems.size == oldItems.size) {
+            Log.d(TAG, "updateItem(move):update=(${position}, ${item}, ${start}, ${end})")
+            oldItems.forEachIndexed { index, oldItem ->
+                val oldPos = items.indexOf(oldItem)
+                items.removeAt(oldPos)
+                val item = splitItems[index]
+                val nextPos = findListPositionToBeInserted(item)
+                items.add(nextPos, item)
+                if (oldPos == nextPos) {
+                    // Pass the 'payload'. Without this, the view will be completely updated, which will cause the view to be destroyed and the selection in ScheduleCalendarItemTouchHelper to be deselected.
+                    // FIXME Should we have a dedicated method that is called from ItemTouchHelper.Callback?
+                    notifyItemChanged(position, PayloadMove)
+                } else {
+                    notifyItemMoved(oldPos, nextPos)
+                }
+            }
+        } else if (splitItems.size > oldItems.size) {
+            val priorityIndex = splitItems.indexOfFirst { it.start().isToday(item.start()) }
+            Log.d(TAG, "updateItem(insert):priorityIndex='${position}, ${priorityIndex}', sizeChanges='${oldItems.size}'->'${splitItems.size}', update=(${item}, ${start}, ${end})")
+            splitItems.forEachIndexed { index, item ->
+                val oldItemIndex = if (index < priorityIndex && index >= oldItems.size - 1) {
+                    -1
+                } else if (index == priorityIndex) {
+                    oldItems.size - 1
+                } else {
+                    index
+                }
+                Log.d(TAG, "updateItem(insert):priorityIndex='${priorityIndex}', index='${index}' oldItemIndex='${oldItemIndex}', newItem='${item}'")
+                oldItems.getOrNull(oldItemIndex)?.let { oldItem ->
+                    val oldPos = items.indexOf(oldItem)
+                    items.removeAt(oldPos)
+                    val item = splitItems[index]
+                    val nextPos = findListPositionToBeInserted(item)
+                    items.add(nextPos, item)
+                    if (oldPos == nextPos) {
+                        // Pass the 'payload'. Without this, the view will be completely updated, which will cause the view to be destroyed and the selection in ScheduleCalendarItemTouchHelper to be deselected.
+                        // FIXME Should we have a dedicated method that is called from ItemTouchHelper.Callback?
+                        notifyItemChanged(position, PayloadMove)
+                    } else {
+                        notifyItemMoved(oldPos, nextPos)
+                    }
+                } ?: run {
+                    val nextPos = findListPositionToBeInserted(item)
+                    items.add(nextPos, item)
+                    notifyItemInserted(nextPos)
+                }
+            }
+        } else {
+            // An old item at the specified position will be preferred as items to be moved, not deleted.
+            val priorityIndex = oldItems.indexOf(item).let {
+                if (it > splitItems.size - 1) it else -1
+            }
+            Log.d(TAG, "updateItem(remove):priorityIndex='${priorityIndex}', sizeChanges='${oldItems.size}'->'${splitItems.size}', update=(${position}, ${item}, ${start}, ${end})")
+            oldItems.forEachIndexed { index, oldItem ->
+                val oldPos = items.indexOf(oldItem)
+                items.removeAt(oldPos)
+                if (index < priorityIndex && index >= splitItems.size - 1) {
+                    // If the item at the priority index may consume splitItems, simply delete the item instead of inserting and moving it.
+                    notifyItemRemoved(oldPos)
+                } else {
+                    // For the priority index, select the last item;otherwise, use the index as is.
+                    val splitItemIndex = if (index == priorityIndex) splitItems.size - 1 else index
+                    splitItems.getOrNull(splitItemIndex)?.let { item ->
+                        val nextPos = findListPositionToBeInserted(item)
+                        items.add(nextPos, item)
+                        if (oldPos == nextPos) {
+                            // Pass the 'payload'. Without this, the view will be completely updated, which will cause the view to be destroyed and the selection in ScheduleCalendarItemTouchHelper to be deselected.
+                            // FIXME Should we have a dedicated method that is called from ItemTouchHelper.Callback?
+                            notifyItemChanged(position, PayloadMove)
+                        } else {
+                            notifyItemMoved(oldPos, nextPos)
+                        }
+                    } ?: run {
+                        notifyItemRemoved(oldPos)
+                    }
+                }
+            }
+        }
+    }
+
+    fun getItemsWithSameKey(position: Int): List<ScheduleItem> {
+        val item = getItem(position) ?: return listOf()
+        val origin = item.getOrigin() ?: return listOf(item)
+        val list = mutableListOf<ScheduleItem>()
+        for (i in 0 until items.size) {
+            val si = items[i]
+            if (si.key() == origin.key()) {
+                list.add(si)
+            }
+            if (si.start().after(origin.end())) {
+                break
+            }
+        }
+        return list
     }
 
     /**
@@ -107,7 +206,7 @@ abstract class ScheduleCalendarAdapter() :
 
         // next, add other schedule items.
         list.filterNotDateScheduleItems().forEach {
-            addItem(it)
+            it.splitAtMidnight().forEach { splitItem -> addItem(splitItem) }
         }
     }
 

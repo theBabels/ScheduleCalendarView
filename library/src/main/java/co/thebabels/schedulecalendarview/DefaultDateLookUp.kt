@@ -27,4 +27,12 @@ class DefaultDateLookUp(private val adapter: ScheduleCalendarAdapter) :
             it is CurrentTimeScheduleItem
         } ?: false
     }
+
+    override fun isStartSplit(position: Int): Boolean {
+        return adapter.getItem(position)?.isStartSplit() == true
+    }
+
+    override fun isEndSplit(position: Int): Boolean {
+        return adapter.getItem(position)?.isEndSplit() == true
+    }
 }

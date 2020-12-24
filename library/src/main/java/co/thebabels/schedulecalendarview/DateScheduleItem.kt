@@ -9,7 +9,7 @@ import java.util.*
 /**
  * [ScheduleItem] of a date label.
  */
-data class DateScheduleItem(private val cal: Calendar) : ScheduleItem {
+data class DateScheduleItem(private val cal: Calendar, private var origin: ScheduleItem? = null) : ScheduleItem {
 
     companion object {
 
@@ -112,6 +112,10 @@ data class DateScheduleItem(private val cal: Calendar) : ScheduleItem {
         return previousDays(size, includeThis)
     }
 
+    override fun key(): String {
+        return cal.time.toString()
+    }
+
     override fun start(): Date {
         return cal.time
     }
@@ -123,6 +127,14 @@ data class DateScheduleItem(private val cal: Calendar) : ScheduleItem {
     override fun update(start: Date, end: Date): ScheduleItem {
         Log.w("DateScheduleItem", "DateScheduleItem.update is not implemented")
         return this
+    }
+
+    override fun getOrigin(): ScheduleItem? {
+        return this.origin
+    }
+
+    override fun setOrigin(origin: ScheduleItem?) {
+        this.origin = origin
     }
 
     fun dateString(): String {

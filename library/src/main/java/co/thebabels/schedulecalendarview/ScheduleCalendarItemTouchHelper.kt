@@ -135,7 +135,7 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
      */
     /* synthetic access */ val scrollRunnable: Runnable = object : Runnable {
         override fun run() {
-            Log.d(TAG, "ScrollRunnable")
+            Log.v(TAG, "ScrollRunnable")
             selected?.let { selected ->
                 if (scrollIfNecessary()) {
                     // move selected item because it might be lost during scrolling
@@ -166,7 +166,7 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
 
         override fun onInterceptTouchEvent(recyclerView: RecyclerView,
                                            event: MotionEvent): Boolean {
-            Log.d(TAG, "onInterceptTouchEvent: x:'${event.x}', y:'${event.y}', '${event}'")
+            Log.v(TAG, "onInterceptTouchEvent: x:'${event.x}', y:'${event.y}', '${event}'")
             gestureDetector?.onTouchEvent(event)
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
@@ -223,9 +223,10 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
                     null
                 } else {
                     val innerOffset = if (view.height > offset * 5) offset else max(view.height - (offset * 3), 0)
-                    if (y < view.top + innerOffset) {
+                    val lp = view.layoutParams as ScheduleCalendarLayoutManager.LayoutParams
+                    if (y < view.top + innerOffset && !lp.isStartSplit) {
                         ACTION_STATE_DRAG_START
-                    } else if (y > view.bottom - innerOffset) {
+                    } else if (y > view.bottom - innerOffset && !lp.isEndSplit) {
                         ACTION_STATE_DRAG_END
                     } else {
                         ACTION_STATE_DRAG
@@ -235,7 +236,7 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
         }
 
         override fun onTouchEvent(recyclerView: RecyclerView, event: MotionEvent) {
-            Log.d(TAG, "onTouchEvent: '${event.x}', '${event.y}', '${event.actionMasked}'")
+            Log.v(TAG, "onTouchEvent: '${event.x}', '${event.y}', '${event.actionMasked}'")
             gestureDetector?.onTouchEvent(event)
             if (mActivePointerId == ACTIVE_POINTER_ID_NONE) {
                 return
@@ -586,15 +587,18 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
                         ?: return
                 val x = (selectedStartX + dx).toInt()
                 val y = (selectedStartY + dy).toInt()
-                val start = lm.getDateAt(x, y) ?: return
-                val end = start.toCalendar().apply {
-                    add(Calendar.MINUTE, lp.end?.minuteDiff(lp.start!!)?.toInt() ?: 0)
-                }.time
+                val endY = (selectedEndY + dy).toInt()
+                val start = lm.getDateAt(x, y, callback.minuteSpan()) ?: return
+                val end = lm.getDateAt(x, endY, callback.minuteSpan()) ?: return
+//                val end = start.toCalendar().apply {
+//                    add(Calendar.MINUTE, lp.end?.minuteDiff(lp.start!!)?.toInt() ?: 0)
+//                }.time
 
                 // skip if nothing changed
                 if (lp.start?.equals(start) == true && lp.end?.equals(end) == true) {
                     return
                 }
+                Log.d(TAG, "DRAG: [${selectedStartX}, ${selectedStartY}], [${dx}, ${dy}], [${start}, ${end}]")
                 if (callback.onMove(recyclerView, viewHolder, start, end)) {
 //                    // keep target visible
 //                    callback.onMoved(recyclerView, viewHolder, fromPosition, target, toPosition, x, y)
@@ -606,7 +610,7 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
                 val x = selectedStartX.toInt()
                 val y = (selectedStartY + dy).toInt()
                 val end = lp.end ?: return
-                val start = lm.getDateAt(x, y)?.let {
+                val start = lm.getDateAt(x, y, callback.minuteSpan())?.let {
                     if (it.before(end)) it else end
                 } ?: return
 
@@ -625,7 +629,7 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
                 val x = selectedStartX.toInt()
                 val y = (selectedEndY + dy).toInt()
                 val start = lp.start ?: return
-                val end = lm.getDateAt(x, y)?.let {
+                val end = lm.getDateAt(x, y, callback.minuteSpan())?.let {
                     if (it.after(start)) it else start
                 } ?: return
 
@@ -649,10 +653,10 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
 //        removeChildDrawingOrderCallbackIfNecessary(view)
         val holder: ViewHolder = recyclerView?.getChildViewHolder(view) ?: return
         if (selected != null && holder === selected) {
-            Log.d(TAG, "onChildViewDetachedFromWindow: clear selection")
+            Log.v(TAG, "onChildViewDetachedFromWindow: clear selection")
             select(null, ItemTouchHelper.ACTION_STATE_IDLE)
         } else {
-            Log.d(TAG, "onChildViewDetachedFromWindow: end recover animation")
+            Log.v(TAG, "onChildViewDetachedFromWindow: end recover animation")
             endRecoverAnimation(holder, false) // this may push it into pending cleanup list.
 //            if (mPendingCleanup.remove(holder.itemView)) {
             recyclerView?.let { callback.clearView(it, holder) }
@@ -717,11 +721,15 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
 
     fun updateDxDy(ev: MotionEvent, pointerIndex: Int) {
         val lm = recyclerView?.layoutManager?.let { it as ScheduleCalendarLayoutManager } ?: return
+        val lp = selected?.itemView?.layoutParams?.let { it as ScheduleCalendarLayoutManager.LayoutParams }
+                ?: return
         val x = ev.getX(pointerIndex)
         val tmpDy = ev.getY(pointerIndex) - initialTouchY
         dx = lm.getValidPositionX(x)?.let { it - selectedStartX } ?: return
-        dy = lm.getValidPositionY(selectedStartY + tmpDy, callback.minuteSpan())?.let { it - selectedStartY }
-                ?: return
+        dy = if (!lp.isStartSplit || !lp.isEndSplit) {
+            lm.getValidPositionY(selectedStartY + tmpDy, callback.minuteSpan())?.let { it - selectedStartY }
+                    ?: return
+        } else 0f
         Log.d(TAG, "updateDxDy: dx='${dx}', dy='${dy}'")
     }
 

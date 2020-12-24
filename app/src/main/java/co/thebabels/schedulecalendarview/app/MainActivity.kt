@@ -73,6 +73,11 @@ class MainActivity : AppCompatActivity() {
                         cal.apply { add(Calendar.DATE, 1) }.time,
                         cal.apply { add(Calendar.HOUR, 1) }.time
                 ),
+                TextScheduleItem(
+                        "text-004",
+                        cal.apply { add(Calendar.DATE, 2) }.time,
+                        cal.apply { add(Calendar.HOUR, 24) }.time
+                ),
                 CurrentTimeScheduleItem.now(),
         )
 
@@ -89,13 +94,26 @@ class MainActivity : AppCompatActivity() {
         touchHelper.attachToRecyclerView(recyclerView)
     }
 
-    data class TextScheduleItem(val text: String, val start: Date, val end: Date) : ScheduleItem {
+    data class TextScheduleItem(val text: String, val start: Date, val end: Date, private var origin: ScheduleItem? = null) : ScheduleItem {
+
+        override fun key(): String {
+            return text
+        }
+
         override fun start(): Date {
             return this.start
         }
 
         override fun end(): Date {
             return this.end
+        }
+
+        override fun getOrigin(): ScheduleItem? {
+            return this.origin
+        }
+
+        override fun setOrigin(origin: ScheduleItem?) {
+            this.origin = origin
         }
 
         override fun update(start: Date, end: Date): ScheduleItem {

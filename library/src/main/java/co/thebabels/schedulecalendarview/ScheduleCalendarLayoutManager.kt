@@ -37,6 +37,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     var dateLabelHeight = 0
     var timeScaleWidth = 0
     var currentTimeHeight = 0
+    var itemRightPadding = 0
     private lateinit var dateLookUp: DateLookUp
     private var listener: Listener? = null
     private var firstVisibleItemPosition: Int = -1
@@ -380,6 +381,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
 
         // measure child
         lp.height = lp.calcHeight()
+        lp.width = lp.calcWidth()
         measureChild(view, 0, 0)
 
         // calculate layout position based on first
@@ -416,6 +418,8 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         val lp = view.layoutParams as LayoutParams
         lp.dateLabelHeight = dateLabelHeight
         lp.rowHeight = rowHeight
+        lp.columnWidth = rowWidth()
+        lp.itemRightPadding = itemRightPadding
         lp.isDateLabel = dateLookUp.isDateLabel(position)
         lp.isCurrentTime = dateLookUp.isCurrentTime(position)
         lp.currentTimeHeight = currentTimeHeight
@@ -540,12 +544,19 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         var dateLabelHeight: Int = 0
         var currentTimeHeight = 0
         var rowHeight: Float = 0f
+        var columnWidth: Int = 0
         var isDateLabel: Boolean = false
         var isCurrentTime: Boolean = false
+        var itemRightPadding = 0
         var start: Date? = null
         var end: Date? = null
         var isStartSplit = false
         var isEndSplit = false
+
+        /**
+         * true if item is currently selected, otherwise false.
+         */
+        var isSelected = false
 
         constructor(c: Context?, attrs: AttributeSet?) : super(c, attrs)
 
@@ -569,6 +580,18 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
                     // TODO set minimum size
                     max(it * rowHeight, 16f)
                 }?.toInt() ?: 0
+            }
+        }
+
+        fun calcWidth(): Int {
+            return if (isDateLabel || isCurrentTime) {
+                columnWidth
+            } else {
+                if (isSelected) {
+                    columnWidth
+                } else {
+                    columnWidth - itemRightPadding
+                }
             }
         }
     }

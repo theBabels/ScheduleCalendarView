@@ -9,6 +9,7 @@
         <item name="dateLabelHeight">72dp</item>
         <item name="gridLineColor">@color/grid_line</item>
         <item name="currentTimeHeight">8dp</item>
+        <item name="itemRightPadding">6dp</item>
     </style>
 
     <style name="ScheduleCalendarViewWidget.DateLabel">

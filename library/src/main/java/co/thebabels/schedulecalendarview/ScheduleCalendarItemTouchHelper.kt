@@ -433,6 +433,8 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
 //        val actionStateMask = ((1 shl ItemTouchHelper.DIRECTION_FLAG_COUNT + ItemTouchHelper.DIRECTION_FLAG_COUNT * actionState) - 1)
         var preventLayout = false
         this.selected?.let { prevSelected ->
+            // un-select
+            updateSelected(prevSelected.itemView, false)
             if (prevSelected.itemView.parent != null) {
                 // find where we should animate to
                 val targetTranslateX = 0f
@@ -485,6 +487,8 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
         if (selected != null) {
 //            mSelectedFlags = (callback.getAbsoluteMovementFlags(recyclerView, selected) and actionStateMask
 //                    shr mActionState * ItemTouchHelper.DIRECTION_FLAG_COUNT)
+            // update selected
+            updateSelected(selected.itemView, true)
             this.selectedStartX = selected.itemView.left.toFloat()
             this.selectedStartY = selected.itemView.top.toFloat()
             this.selectedEndY = selected.itemView.bottom.toFloat()
@@ -500,6 +504,15 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
         }
 //        callback.onSelectedChanged(mSelected, mActionState)
         recyclerView.invalidate()
+    }
+
+    private fun updateSelected(view: View, selected: Boolean) {
+        view.layoutParams?.let { lp ->
+            if (lp is ScheduleCalendarLayoutManager.LayoutParams) {
+                lp.isSelected = selected
+                view.layoutParams = lp
+            }
+        }
     }
 
     /**

@@ -42,6 +42,20 @@ interface ScheduleItem {
     fun setOrigin(origin: ScheduleItem?)
 
     /**
+     * Return true fi this item is date label.
+     */
+    fun isDateLabel(): Boolean {
+        return false
+    }
+
+    /**
+     * Returns true if this is fill item.
+     */
+    fun isFillItem(): Boolean {
+        return false
+    }
+
+    /**
      * Returns a new [ScheduleItem] that reflects the updates of [start] and [end] of this item in the original item.
      */
     fun reflectUpdateToOrigin(start: Date, end: Date): ScheduleItem {
@@ -158,6 +172,11 @@ interface ScheduleItem {
      *      <code>0</code> if this Date is after the Date argument.
      */
     fun compareTo(target: ScheduleItem): Int {
+        // The fill-item is preferentially placed in the previous position if the other party is same day and not a 'DateLabel'.
+        if (this.isFillItem() != target.isFillItem() && this.start().isToday(target.start()) && !this.isDateLabel() && !target.isDateLabel()) {
+            return if (this.isFillItem()) -1 else 1
+        }
+
         return this.start().compareTo(target.start()).let { startCompare ->
             when (startCompare) {
                 0 -> this.end().compareTo(target.end())

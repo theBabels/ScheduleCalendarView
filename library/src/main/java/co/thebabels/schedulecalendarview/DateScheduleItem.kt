@@ -137,6 +137,10 @@ data class DateScheduleItem(private val cal: Calendar, private var origin: Sched
         this.origin = origin
     }
 
+    override fun isDateLabel(): Boolean {
+        return true
+    }
+
     fun dateString(): String {
         return "${cal.get(Calendar.DATE)}"
     }

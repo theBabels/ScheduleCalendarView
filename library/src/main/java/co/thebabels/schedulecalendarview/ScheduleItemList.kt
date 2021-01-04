@@ -22,7 +22,7 @@ fun List<ScheduleItem>.filterDateScheduleItems(): List<DateScheduleItem> {
  * Return a list excluding [DateScheduleItem].
  */
 fun List<ScheduleItem>.filterNotDateScheduleItems(): List<ScheduleItem> {
-    return this.filterNot { it is DateScheduleItem }
+    return this.filterNot { it.isDateLabel() }
 }
 
 /**

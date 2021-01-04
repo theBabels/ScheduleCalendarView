@@ -175,11 +175,11 @@ abstract class ScheduleCalendarAdapter() :
      * '[items].size - 1' if given [date] is after than all [DateScheduleItem] in the [items].
      */
     fun getDateLabelPosition(date: Date = Date()): Int? {
-        val first = items.firstOrNull { it is DateScheduleItem }?.start() ?: return null
+        val first = items.firstOrNull { it.isDateLabel() }?.start() ?: return null
         if (date.before(first)) {
             return 0
         }
-        return items.indexOfFirst { it is DateScheduleItem && it.start().isToday(date) }.let {
+        return items.indexOfFirst { it.isDateLabel() && it.start().isToday(date) }.let {
             if (it == -1) {
                 items.size - 1
             } else {
@@ -290,9 +290,10 @@ abstract class ScheduleCalendarAdapter() :
         return when (position) {
             items.size -> ViewTypeTimeScale
             else -> {
-                when (items.getOrNull(position)) {
-                    is DateScheduleItem -> ViewTypeDateLabel
-                    is CurrentTimeScheduleItem -> ViewTypeCurrentTime
+                val item = items.getOrNull(position)
+                when {
+                    item?.isDateLabel() == true -> ViewTypeDateLabel
+                    item is CurrentTimeScheduleItem -> ViewTypeCurrentTime
                     else -> ViewTypeSchedule
                 }
             }

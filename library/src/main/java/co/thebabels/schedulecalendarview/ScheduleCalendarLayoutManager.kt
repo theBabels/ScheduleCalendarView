@@ -398,7 +398,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             getDecoratedRight(anchorLabel) + rowWidth * (lp.start?.dateDiff(anchorDateLabelStart!!)
                     ?.let { it - 1 } ?: 0)
         } ?: tmpFirstDateLabelPosition ?: timeScaleWidth
-        val left = if (lp.isSelected) leftAnchor else leftAnchor + (lp.subColumnPosition * (lp.subColumnWidth() + lp.subColumnMargin))
+        val left = if (lp.isSelected || lp.isFillItem) leftAnchor else leftAnchor + (lp.subColumnPosition * (lp.subColumnWidth() + lp.subColumnMargin))
         val top = if (lp.isDateLabel) {
             0
         } else {
@@ -429,6 +429,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         lp.end = dateLookUp.lookUpEnd(position)
         lp.isStartSplit = dateLookUp.isStartSplit(position)
         lp.isEndSplit = dateLookUp.isEndSplit(position)
+        lp.isFillItem = dateLookUp.isFillItem(position)
         val overlapInfo = dateLookUp.lookUpOverlap(position)
         val headOverlap = overlapInfo.headPosition?.let { dateLookUp.lookUpOverlap(it) }
         lp.subColumnPosition = overlapInfo.columnPosition()
@@ -560,6 +561,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         var columnWidth: Int = 0
         var isDateLabel: Boolean = false
         var isCurrentTime: Boolean = false
+        var isFillItem: Boolean = false
         var itemRightPadding = 0
         var subColumnMargin = 0
         var start: Date? = null
@@ -604,7 +606,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             return if (isDateLabel || isCurrentTime) {
                 columnWidth
             } else {
-                if (isSelected) {
+                if (isSelected || isFillItem) {
                     columnWidth
                 } else {
                     subColumnWidth() * subColumnSpan
@@ -658,5 +660,6 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         fun isCurrentTime(position: Int): Boolean
         fun isStartSplit(position: Int): Boolean
         fun isEndSplit(position: Int): Boolean
+        fun isFillItem(position: Int): Boolean
     }
 }

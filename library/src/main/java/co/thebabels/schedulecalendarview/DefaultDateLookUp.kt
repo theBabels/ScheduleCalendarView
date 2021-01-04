@@ -17,7 +17,7 @@ class DefaultDateLookUp(private val adapter: ScheduleCalendarAdapter) :
     }
 
     override fun lookUpOverlap(position: Int): ScheduleCalendarLayoutManager.OverlapInfo {
-        val overlapPositions = adapter.getOverlapPositions(position).filter { !isDateLabel(it) && !isCurrentTime(it) }
+        val overlapPositions = adapter.getOverlapPositions(position).filter { !isDateLabel(it) && !isCurrentTime(it) && !isFillItem(it) }
         val beforePositions = overlapPositions.filter { it < position }
         return ScheduleCalendarLayoutManager.OverlapInfo(
                 beforePositions = beforePositions,
@@ -28,9 +28,7 @@ class DefaultDateLookUp(private val adapter: ScheduleCalendarAdapter) :
     }
 
     override fun isDateLabel(position: Int): Boolean {
-        return adapter.getItem(position)?.let {
-            it is DateScheduleItem
-        } ?: false
+        return adapter.getItem(position)?.isDateLabel() == true
     }
 
     override fun isCurrentTime(position: Int): Boolean {
@@ -45,5 +43,9 @@ class DefaultDateLookUp(private val adapter: ScheduleCalendarAdapter) :
 
     override fun isEndSplit(position: Int): Boolean {
         return adapter.getItem(position)?.isEndSplit() == true
+    }
+
+    override fun isFillItem(position: Int): Boolean {
+        return adapter.getItem(position)?.isFillItem() == true
     }
 }

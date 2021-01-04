@@ -1,5 +1,6 @@
 package co.thebabels.schedulecalendarview.app
 
+import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -77,6 +78,12 @@ class MainActivity : AppCompatActivity() {
                         cal.apply { add(Calendar.DATE, 2) }.time,
                         cal.apply { add(Calendar.HOUR, 24) }.time
                 ),
+                TextScheduleItem(
+                        "Fill Item",
+                        cal.apply { add(Calendar.HOUR, 2) }.time,
+                        cal.apply { add(Calendar.HOUR, 4) }.time,
+                        isFill = true,
+                ),
                 CurrentTimeScheduleItem.now(),
         )
 
@@ -112,7 +119,7 @@ class MainActivity : AppCompatActivity() {
         touchHelper.attachToRecyclerView(recyclerView)
     }
 
-    data class TextScheduleItem(val text: String, val start: Date, val end: Date, private var origin: ScheduleItem? = null) : ScheduleItem {
+    data class TextScheduleItem(val text: String, val start: Date, val end: Date, private var origin: ScheduleItem? = null, private val isFill: Boolean = false) : ScheduleItem {
 
         override fun key(): String {
             return text
@@ -137,6 +144,10 @@ class MainActivity : AppCompatActivity() {
         override fun update(start: Date, end: Date): ScheduleItem {
             return this.copy(start = start, end = end)
         }
+
+        override fun isFillItem(): Boolean {
+            return isFill
+        }
     }
 
 
@@ -157,6 +168,11 @@ class MainActivity : AppCompatActivity() {
                     if (item is TextScheduleItem) {
                         itemView.text = item.text
                     }
+                }
+                if (item.isFillItem()) {
+                    itemView.setBackgroundColor(Color.GRAY)
+                } else {
+                    itemView.setBackgroundResource(R.drawable.bg_text_item)
                 }
             }
         }

@@ -416,7 +416,7 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
         }
         val recyclerView = recyclerView ?: return
 
-//        mDragScrollStartTimeInMs = Long.MIN_VALUE
+        val changeSelection = selected != this.selected && (actionState == ACTION_STATE_SELECT || actionState == ACTION_STATE_IDLE)
         val prevActionState: Int = this.actionState
         // prevent duplicate animations
         selected?.let { endRecoverAnimation(it, true) }
@@ -477,6 +477,9 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
                 recoverAnimations.add(rv)
                 rv.start()
                 preventLayout = true
+                if (changeSelection) {
+                    callback.onSelectionFinished(prevSelected)
+                }
             } else {
                 // TODO
 //                removeChildDrawingOrderCallbackIfNecessary(prevSelected.itemView)
@@ -489,6 +492,9 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
 //                    shr mActionState * ItemTouchHelper.DIRECTION_FLAG_COUNT)
             // update selected
             updateSelected(selected.itemView, true)
+            if (changeSelection) {
+                callback.onSelectionChanged(selected)
+            }
             this.selectedStartX = selected.itemView.left.toFloat()
             this.selectedStartY = selected.itemView.top.toFloat()
             this.selectedEndY = selected.itemView.bottom.toFloat()
@@ -770,10 +776,22 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
 
         private var mCachedMaxScrollSpeed = -1
 
+        private var selectedItem: ScheduleItem? = null
+
+        /**
+         * Called when item selection is finished.
+         */
+        open fun onSelectionFinished(adapterPosition: Int, prev: ScheduleItem?) {}
+
         /**
          * Check whether the specified [viewHolder] is editable or not.
          */
         abstract fun isEditable(viewHolder: RecyclerView.ViewHolder): Boolean
+
+        /**
+         * Returns an [ScheduleItem] at [position] in the adapter.
+         */
+        abstract fun getScheduleItem(position: Int): ScheduleItem?
 
         /**
          * Called when ItemTouchHelper wants to move the dragged item from its old position to
@@ -1073,6 +1091,21 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
 
         open fun minuteSpan(): Int {
             return 15
+        }
+
+        /**
+         * Called when selected view holder is changed.
+         */
+        fun onSelectionChanged(holder: RecyclerView.ViewHolder) {
+            this.selectedItem = getScheduleItem(holder.adapterPosition)
+        }
+
+        /**
+         * Called when item selection is finished.
+         */
+        fun onSelectionFinished(holder: RecyclerView.ViewHolder) {
+            onSelectionFinished(holder.adapterPosition, this.selectedItem)
+            this.selectedItem = null
         }
     }
 

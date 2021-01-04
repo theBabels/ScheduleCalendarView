@@ -1,6 +1,5 @@
 package co.thebabels.schedulecalendarview.app
 
-import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -10,7 +9,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import co.thebabels.schedulecalendarview.*
-import co.thebabels.schedulecalendarview.extention.clearToMidnight
+import com.google.android.material.snackbar.Snackbar
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
@@ -89,6 +88,25 @@ class MainActivity : AppCompatActivity() {
             override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, start: Date, end: Date): Boolean {
                 adapter.updateItem(viewHolder.adapterPosition, start, end)
                 return true
+            }
+
+            override fun getScheduleItem(position: Int): ScheduleItem? {
+                return adapter.getItem(position)
+            }
+
+            override fun onSelectionFinished(adapterPosition: Int, prev: ScheduleItem?) {
+                val view: View = findViewById(R.id.recycler_view)
+                if (adapter.getItem(adapterPosition) != prev) {
+                    Snackbar.make(view, R.string.snackbar_selection_finished, Snackbar.LENGTH_LONG)
+                            .let {
+                                prev?.let { before ->
+                                    it.setAction(R.string.snackbar_action_recover) {
+                                        adapter.updateItem(adapterPosition, before.start(), before.end())
+                                    }
+                                } ?: it
+                            }
+                            .show()
+                }
             }
         })
         touchHelper.attachToRecyclerView(recyclerView)

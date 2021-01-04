@@ -38,6 +38,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     var timeScaleWidth = 0
     var currentTimeHeight = 0
     var itemRightPadding = 0
+    var subColumnMargin = 0
     private lateinit var dateLookUp: DateLookUp
     private var listener: Listener? = null
     private var firstVisibleItemPosition: Int = -1
@@ -393,10 +394,11 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         val rowWidth = rowWidth()
         val anchorDateLabelLp = anchorDateLabel?.layoutParams?.let { it as LayoutParams }
         val anchorDateLabelStart = anchorDateLabelLp?.start
-        val left = anchorDateLabel?.let { anchorLabel ->
+        val leftAnchor = anchorDateLabel?.let { anchorLabel ->
             getDecoratedRight(anchorLabel) + rowWidth * (lp.start?.dateDiff(anchorDateLabelStart!!)
                     ?.let { it - 1 } ?: 0)
         } ?: tmpFirstDateLabelPosition ?: timeScaleWidth
+        val left = if (lp.isSelected) leftAnchor else leftAnchor + (lp.subColumnPosition * (lp.subColumnWidth() + lp.subColumnMargin))
         val top = if (lp.isDateLabel) {
             0
         } else {
@@ -427,6 +429,17 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         lp.end = dateLookUp.lookUpEnd(position)
         lp.isStartSplit = dateLookUp.isStartSplit(position)
         lp.isEndSplit = dateLookUp.isEndSplit(position)
+        val overlapInfo = dateLookUp.lookUpOverlap(position)
+        val headOverlap = overlapInfo.headPosition?.let { dateLookUp.lookUpOverlap(it) }
+        lp.subColumnPosition = overlapInfo.columnPosition()
+        if (headOverlap == null) {
+            lp.subColumnCount = overlapInfo.maxDuplicationCount
+            lp.subColumnSpan = 1
+        } else {
+            lp.subColumnCount = headOverlap.maxDuplicationCount
+            lp.subColumnSpan = 1
+        }
+        lp.subColumnMargin = subColumnMargin
         view.layoutParams = lp
         return lp
     }
@@ -548,10 +561,14 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         var isDateLabel: Boolean = false
         var isCurrentTime: Boolean = false
         var itemRightPadding = 0
+        var subColumnMargin = 0
         var start: Date? = null
         var end: Date? = null
         var isStartSplit = false
         var isEndSplit = false
+        var subColumnPosition = 0
+        var subColumnCount = 1
+        var subColumnSpan = 1
 
         /**
          * true if item is currently selected, otherwise false.
@@ -590,8 +607,42 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
                 if (isSelected) {
                     columnWidth
                 } else {
-                    columnWidth - itemRightPadding
+                    subColumnWidth() * subColumnSpan
                 }
+            }
+        }
+
+        fun subColumnWidth(): Int {
+            return (columnWidth - itemRightPadding - (subColumnCount - 1) * subColumnMargin) / subColumnCount
+        }
+    }
+
+    /**
+     * Information about the overlap of a schedule item with other items.
+     */
+    data class OverlapInfo(
+            /**
+             * A list of the positions of duplicate items that precede the item in the list.
+             */
+            val beforePositions: List<Int>,
+            /**
+             * Adapter position that is head of the sub column.
+             */
+            val headPosition: Int?,
+
+            /**
+             * Maximum number of duplicate items at the same time.
+             */
+            val maxDuplicationCount: Int,
+    ) {
+        /**
+         * Returns the sub-column position to layout based on this overlap information
+         */
+        fun columnPosition(): Int {
+            return if (headPosition == null) {
+                0
+            } else {
+                beforePositions.filter { it >= headPosition }.size
             }
         }
     }
@@ -602,6 +653,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     interface DateLookUp {
         fun lookUpStart(position: Int): Date?
         fun lookUpEnd(position: Int): Date?
+        fun lookUpOverlap(position: Int): OverlapInfo
         fun isDateLabel(position: Int): Boolean
         fun isCurrentTime(position: Int): Boolean
         fun isStartSplit(position: Int): Boolean

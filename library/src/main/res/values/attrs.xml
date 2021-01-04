@@ -12,6 +12,7 @@
         <attr name="dateLabelHeight" format="dimension|reference" />
         <attr name="currentTimeHeight" format="dimension|reference" />
         <attr name="itemRightPadding" format="dimension|reference" />
+        <attr name="subColumnMargin" format="dimension|reference" />
     </declare-styleable>
     <declare-styleable name="DateLabelView" parent="ScheduleCalendarViewBase">
         <attr name="dayOfWeekTextColor" format="color|reference" />

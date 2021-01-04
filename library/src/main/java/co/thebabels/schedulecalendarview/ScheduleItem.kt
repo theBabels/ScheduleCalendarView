@@ -119,6 +119,39 @@ interface ScheduleItem {
     }
 
     /**
+     * Returns true if this schedule overlaps with [target] schedule.
+     *
+     * ex)
+     *  this=19:00~21:00, target=20:00~21:00 -> true
+     *  this=19:00~21:00, target=21:00~21:00 -> false
+     */
+    fun isOverlap(target: ScheduleItem, ignoreInclusion: Boolean = false): Boolean {
+        val s = start()
+        val e = end()
+        val ts = target.start()
+        val te = target.end()
+
+        // start or end is same time.
+        if (s == ts || (e == te && s.before(e) && ts.before(te))) {
+            return true
+        }
+
+        // overlaps (not inclusion)
+        if ((s.before(ts) && e.after(ts) && e.before(te)) || (s.before(te) && e.after(te)) && s.after(ts)) {
+            return true
+        }
+
+        // inclusion
+        if (!ignoreInclusion) {
+            if ((s.before(ts) && e.after(te)) || s.after(ts) && e.before(te)) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    /**
      * @return  the value <code>0</code> if the argument Date is equal to
      *          this Date; a value less than <code>0</code> if this Date
      *          is before the Date argument; and a value greater than

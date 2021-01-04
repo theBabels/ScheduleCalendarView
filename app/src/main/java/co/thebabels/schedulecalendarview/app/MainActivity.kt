@@ -126,7 +126,7 @@ class MainActivity : AppCompatActivity() {
 
         override fun createScheduleViewHolder(parent: ViewGroup): ScheduleCalendarAdapter.ViewHolder {
             return ViewHolder(TextView(parent.context).apply {
-                setBackgroundColor(Color.GRAY)
+                setBackgroundResource(R.drawable.bg_text_item)
                 setPadding(8, 8, 8, 8)
             })
         }

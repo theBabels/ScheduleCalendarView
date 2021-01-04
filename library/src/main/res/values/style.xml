@@ -10,6 +10,7 @@
         <item name="gridLineColor">@color/grid_line</item>
         <item name="currentTimeHeight">8dp</item>
         <item name="itemRightPadding">6dp</item>
+        <item name="subColumnMargin">1dp</item>
     </style>
 
     <style name="ScheduleCalendarViewWidget.DateLabel">

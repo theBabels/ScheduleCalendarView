@@ -158,6 +158,14 @@ abstract class ScheduleCalendarAdapter() :
     }
 
     /**
+     * Returns the positions list that overlaps with the item at the given [position].
+     * Note that the position can includes [DateScheduleItem] and [CurrentTimeScheduleItem].
+     */
+    fun getOverlapPositions(position: Int): List<Int> {
+        return items.getOverlapPositions(position)
+    }
+
+    /**
      * Returns the position of [DateScheduleItem] with the same date as specified [date].
      *
      * @param date target date for scrolling. The default value is current time (=today).

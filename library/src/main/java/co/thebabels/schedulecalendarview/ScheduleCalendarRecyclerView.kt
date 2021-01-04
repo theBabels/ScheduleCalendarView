@@ -27,6 +27,7 @@ class ScheduleCalendarRecyclerView @JvmOverloads constructor(
     private var timeScaleWidth = 0
     private var currentTimeHeight = 0
     private var itemRightPadding = 0
+    private var subColumnMargin = 0
 
     init {
         overScrollMode
@@ -45,6 +46,7 @@ class ScheduleCalendarRecyclerView @JvmOverloads constructor(
                 timeScaleWidth = getDimensionPixelSize(R.styleable.ScheduleCalendarRecyclerView_timeScaleWidth, 0)
                 currentTimeHeight = getDimensionPixelSize(R.styleable.ScheduleCalendarRecyclerView_currentTimeHeight, 0)
                 itemRightPadding = getDimensionPixelSize(R.styleable.ScheduleCalendarRecyclerView_itemRightPadding, 0)
+                subColumnMargin = getDimensionPixelSize(R.styleable.ScheduleCalendarRecyclerView_subColumnMargin, 0)
             } finally {
                 recycle()
             }
@@ -61,6 +63,7 @@ class ScheduleCalendarRecyclerView @JvmOverloads constructor(
             layout.timeScaleWidth = this.timeScaleWidth
             layout.currentTimeHeight = this.currentTimeHeight
             layout.itemRightPadding = this.itemRightPadding
+            layout.subColumnMargin = this.subColumnMargin
         }
     }
 

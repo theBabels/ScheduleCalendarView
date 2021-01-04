@@ -779,6 +779,11 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
         private var selectedItem: ScheduleItem? = null
 
         /**
+         * Called when item is selected.
+         */
+        open fun onSelected(adapterPosition: Int) {}
+
+        /**
          * Called when item selection is finished.
          */
         open fun onSelectionFinished(adapterPosition: Int, prev: ScheduleItem?) {}
@@ -1098,6 +1103,7 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
          */
         fun onSelectionChanged(holder: RecyclerView.ViewHolder) {
             this.selectedItem = getScheduleItem(holder.adapterPosition)
+            this.onSelected(holder.adapterPosition)
         }
 
         /**

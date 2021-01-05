@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">schedule-calendar-view</string>
     <string name="btn_today">Today</string>
+    <string name="btn_delete">Delete</string>
     <string name="snackbar_selection_finished">Schedule is Edited!</string>
     <string name="snackbar_action_recover">Recover</string>
 </resources>

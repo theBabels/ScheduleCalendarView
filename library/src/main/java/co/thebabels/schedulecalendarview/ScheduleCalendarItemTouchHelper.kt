@@ -846,8 +846,12 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
 
         /**
          * Called when item selection is finished.
+         *
+         * @param adapterPosition adapter position of the view holder.
+         * This can be null if item is deleted.
+         * @param prev previous state of the item at the start of selection.
          */
-        open fun onSelectionFinished(adapterPosition: Int, prev: ScheduleItem?) {}
+        open fun onSelectionFinished(adapterPosition: Int?, prev: ScheduleItem?) {}
 
         /**
          * Override to create a new schedule item when user touches empty space.
@@ -1233,7 +1237,11 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
          * Called when item selection is finished.
          */
         fun onSelectionFinished(holder: RecyclerView.ViewHolder) {
-            onSelectionFinished(holder.adapterPosition, this.selectedItem)
+            val prevItem = this.selectedItem
+            // item may be deleted if key is different from selected item.
+            val mayBeDeleted = getScheduleItem(holder.adapterPosition)
+                    ?.let { it.key() != prevItem?.key() } ?: true
+            onSelectionFinished(if (mayBeDeleted) null else holder.adapterPosition, prevItem)
             this.selectedItem = null
         }
     }

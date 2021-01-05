@@ -11,7 +11,7 @@ import java.util.*
 
 
 abstract class ScheduleCalendarAdapter() :
-    RecyclerView.Adapter<ScheduleCalendarAdapter.ViewHolder>() {
+        RecyclerView.Adapter<ScheduleCalendarAdapter.ViewHolder>() {
 
     companion object {
         const val TAG = "SCAdapter"
@@ -44,13 +44,27 @@ abstract class ScheduleCalendarAdapter() :
         return items.getOrNull(position)
     }
 
-    private fun addItemImpl(item: ScheduleItem) : Int {
+    private fun addItemImpl(item: ScheduleItem): Int {
         // TODO add date label if necessary?
         // add item
         val position = findListPositionToBeInserted(item)
         this.items.add(position, item)
         notifyItemInserted(position)
         return position
+    }
+
+    /**
+     * Delete items which has same key with an item at [position].
+     */
+    fun deleteItems(position: Int) {
+        val sameKeyItems = getItemsWithSameKey(position)
+        sameKeyItems.forEach { item ->
+            val i = items.indexOf(item)
+            if (i >= 0) {
+                items.removeAt(i)
+                notifyItemRemoved(i)
+            }
+        }
     }
 
     fun updateItem(position: Int, start: Date, end: Date) {
@@ -88,8 +102,8 @@ abstract class ScheduleCalendarAdapter() :
         } else if (splitItems.size > oldItems.size) {
             val priorityIndex = splitItems.indexOfFirst { it.start().isToday(item.start()) }
             Log.d(
-                TAG,
-                "updateItem(insert):priorityIndex='${position}, ${priorityIndex}', sizeChanges='${oldItems.size}'->'${splitItems.size}', update=(${item}, ${start}, ${end})"
+                    TAG,
+                    "updateItem(insert):priorityIndex='${position}, ${priorityIndex}', sizeChanges='${oldItems.size}'->'${splitItems.size}', update=(${item}, ${start}, ${end})"
             )
             splitItems.forEachIndexed { index, item ->
                 val oldItemIndex = if (index < priorityIndex && index >= oldItems.size - 1) {
@@ -100,8 +114,8 @@ abstract class ScheduleCalendarAdapter() :
                     index
                 }
                 Log.d(
-                    TAG,
-                    "updateItem(insert):priorityIndex='${priorityIndex}', index='${index}' oldItemIndex='${oldItemIndex}', newItem='${item}'"
+                        TAG,
+                        "updateItem(insert):priorityIndex='${priorityIndex}', index='${index}' oldItemIndex='${oldItemIndex}', newItem='${item}'"
                 )
                 oldItems.getOrNull(oldItemIndex)?.let { oldItem ->
                     val oldPos = items.indexOf(oldItem)
@@ -128,8 +142,8 @@ abstract class ScheduleCalendarAdapter() :
                 if (it > splitItems.size - 1) it else -1
             }
             Log.d(
-                TAG,
-                "updateItem(remove):priorityIndex='${priorityIndex}', sizeChanges='${oldItems.size}'->'${splitItems.size}', update=(${position}, ${item}, ${start}, ${end})"
+                    TAG,
+                    "updateItem(remove):priorityIndex='${priorityIndex}', sizeChanges='${oldItems.size}'->'${splitItems.size}', update=(${position}, ${item}, ${start}, ${end})"
             )
             oldItems.forEachIndexed { index, oldItem ->
                 val oldPos = items.indexOf(oldItem)
@@ -230,7 +244,7 @@ abstract class ScheduleCalendarAdapter() :
     /**
      * Add given [item].
      */
-    fun addItem(item: ScheduleItem) : Int {
+    fun addItem(item: ScheduleItem): Int {
         var position = -1
         item.splitAtMidnight().forEach {
             val pos = addItemImpl(item)
@@ -252,7 +266,7 @@ abstract class ScheduleCalendarAdapter() :
         // first, add only 'dateLabel' items
         if (this.items.isEmpty()) {
             val dateLabels =
-                DateScheduleItem.fromDate(firstItem.start()).nextDays(lastItem.start(), true)
+                    DateScheduleItem.fromDate(firstItem.start()).nextDays(lastItem.start(), true)
             this.items.addAll(dateLabels)
             notifyItemRangeInserted(0, dateLabels.size)
         } else {
@@ -325,8 +339,8 @@ abstract class ScheduleCalendarAdapter() :
     }
 
     override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
+            parent: ViewGroup,
+            viewType: Int
     ): ViewHolder {
         return when (viewType) {
             ViewTypeTimeScale -> TimeScaleViewHolder(TimeScaleView(parent.context))
@@ -392,7 +406,7 @@ abstract class ScheduleCalendarAdapter() :
     }
 
     abstract class ViewHolder(itemView: View) :
-        RecyclerView.ViewHolder(itemView) {
+            RecyclerView.ViewHolder(itemView) {
 
         abstract fun bind(item: ScheduleItem)
     }

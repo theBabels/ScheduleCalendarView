@@ -10,6 +10,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import co.thebabels.schedulecalendarview.*
+import co.thebabels.schedulecalendarview.extention.toCalendar
 import com.google.android.material.snackbar.Snackbar
 import java.util.*
 
@@ -129,8 +130,29 @@ class MainActivity : AppCompatActivity() {
                             .show()
                     }
                 }
+
+                override fun createItem(date: Date): Int? {
+                    return adapter.addItem(
+                        TextScheduleItem(
+                            getTextLabel(),
+                            date,
+                            date.toCalendar().apply { add(Calendar.HOUR, 1) }.time,
+                            null,
+                            false,
+                        )
+                    )
+                }
             })
         touchHelper.attachToRecyclerView(recyclerView)
+    }
+
+    private fun getTextLabel(): String {
+        return Calendar.getInstance().let { cal ->
+            val hour = cal.get(Calendar.HOUR)
+            val minute = cal.get(Calendar.MINUTE)
+            val sec = cal.get(Calendar.SECOND)
+            return "text-${hour}:${minute}:${sec}"
+        }
     }
 
     data class TextScheduleItem(

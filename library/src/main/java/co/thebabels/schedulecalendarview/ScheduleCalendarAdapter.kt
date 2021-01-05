@@ -44,12 +44,13 @@ abstract class ScheduleCalendarAdapter() :
         return items.getOrNull(position)
     }
 
-    fun addItem(item: ScheduleItem) {
+    private fun addItemImpl(item: ScheduleItem) : Int {
         // TODO add date label if necessary?
         // add item
         val position = findListPositionToBeInserted(item)
         this.items.add(position, item)
         notifyItemInserted(position)
+        return position
     }
 
     fun updateItem(position: Int, start: Date, end: Date) {
@@ -227,6 +228,20 @@ abstract class ScheduleCalendarAdapter() :
     }
 
     /**
+     * Add given [item].
+     */
+    fun addItem(item: ScheduleItem) : Int {
+        var position = -1
+        item.splitAtMidnight().forEach {
+            val pos = addItemImpl(item)
+            if (position == -1) {
+                position = pos
+            }
+        }
+        return position
+    }
+
+    /**
      * Add given [items].
      * If there are existing items which has same key, they will be updated.
      */
@@ -267,7 +282,7 @@ abstract class ScheduleCalendarAdapter() :
             }
 
             // add
-            it.splitAtMidnight().forEach { splitItem -> addItem(splitItem) }
+            it.splitAtMidnight().forEach { splitItem -> addItemImpl(splitItem) }
         }
     }
 

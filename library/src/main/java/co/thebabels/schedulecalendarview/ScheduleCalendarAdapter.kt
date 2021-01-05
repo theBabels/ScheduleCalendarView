@@ -7,7 +7,6 @@ import androidx.recyclerview.widget.RecyclerView
 import co.thebabels.schedulecalendarview.extention.dateDiff
 import co.thebabels.schedulecalendarview.extention.isToday
 import co.thebabels.schedulecalendarview.view.*
-import java.lang.IllegalArgumentException
 import java.util.*
 
 
@@ -24,7 +23,7 @@ abstract class ScheduleCalendarAdapter() :
         const val PayloadMove = "Move"
     }
 
-    private val items: MutableList<ScheduleItem> = mutableListOf()
+    protected val items: MutableList<ScheduleItem> = mutableListOf()
 
     abstract fun createScheduleViewHolder(viewType: Int, parent: ViewGroup): ViewHolder
 
@@ -158,6 +157,9 @@ abstract class ScheduleCalendarAdapter() :
         }
     }
 
+    /**
+     * Returns the items list which has same key with the item at the specified [position].
+     */
     fun getItemsWithSameKey(position: Int): List<ScheduleItem> {
         val item = getItem(position) ?: return listOf()
         val origin = item.getOrigin() ?: return listOf(item)
@@ -169,6 +171,19 @@ abstract class ScheduleCalendarAdapter() :
             }
             if (si.start().after(origin.end())) {
                 break
+            }
+        }
+        return list
+    }
+
+    /**
+     * Returns the positions list which has same key as the specified [key].
+     */
+    fun getPositionsByKey(key: String): List<Int> {
+        val list = mutableListOf<Int>()
+        items.forEachIndexed { index, scheduleItem ->
+            if (scheduleItem.key() == key) {
+                list.add(index)
             }
         }
         return list
@@ -211,6 +226,10 @@ abstract class ScheduleCalendarAdapter() :
         }.let { if (it == -1) items.size else it }
     }
 
+    /**
+     * Add given [items].
+     * If there are existing items which has same key, they will be updated.
+     */
     fun addItems(vararg items: ScheduleItem) {
         val list = items.toList().sort()
         val firstItem = list.firstOrNull() ?: return
@@ -232,6 +251,22 @@ abstract class ScheduleCalendarAdapter() :
 
         // next, add other schedule items.
         list.filterNotDateScheduleItems().forEach {
+            // remove if there is an item with same key.
+            val existingPositions = getPositionsByKey(it.key())
+            if (existingPositions.isNotEmpty()) {
+                val existingItems = existingPositions.mapNotNull { getItem(it) }
+                val exFirstItem = existingItems.firstOrNull()
+                // remove only when value has changed.
+                if (exFirstItem != it && exFirstItem?.getOrigin() != it) {
+                    existingItems.forEach { ei ->
+                        val index = this.items.indexOf(ei)
+                        this.items.removeAt(index)
+                        notifyItemRemoved(index)
+                    }
+                }
+            }
+
+            // add
             it.splitAtMidnight().forEach { splitItem -> addItem(splitItem) }
         }
     }

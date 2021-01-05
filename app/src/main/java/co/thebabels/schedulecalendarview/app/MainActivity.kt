@@ -24,10 +24,10 @@ class MainActivity : AppCompatActivity() {
 
         val recyclerView: RecyclerView = findViewById(R.id.recycler_view)
         recyclerView.layoutManager =
-                ScheduleCalendarLayoutManager(this).apply {
-                    setDateLookUp(DefaultDateLookUp(adapter))
-                    setListener(LayoutListener())
-                }
+            ScheduleCalendarLayoutManager(this).apply {
+                setDateLookUp(DefaultDateLookUp(adapter))
+                setListener(LayoutListener())
+            }
         recyclerView.adapter = adapter
         recyclerView.addOnScrollListener(scrollListener)
 //        val snapHelper = PagerSnapHelper()
@@ -52,74 +52,94 @@ class MainActivity : AppCompatActivity() {
         val days = DateScheduleItem.firstDayOfWeek().nextDays(90, true)
         Log.d("DEBUG", "${days.map { it.dateString() }}")
         adapter.addItems(
-                *days.toTypedArray(),
-                TextScheduleItem(
-                        "text-000",
-                        cal.time,
-                        cal.apply { add(Calendar.HOUR, 1) }.time,
-                ),
-                TextScheduleItem(
-                        "text-001",
-                        cal.apply { add(Calendar.HOUR, 1) }.time,
-                        cal.apply { add(Calendar.HOUR, 1) }.time
-                ),
-                TextScheduleItem(
-                        "text-002",
-                        cal.apply { add(Calendar.DATE, 1) }.time,
-                        cal.apply { add(Calendar.HOUR, 4) }.time
-                ),
-                TextScheduleItem(
-                        "text-003",
-                        cal.apply { add(Calendar.DATE, 1) }.time,
-                        cal.apply { add(Calendar.HOUR, 1) }.time
-                ),
-                TextScheduleItem(
-                        "text-004",
-                        cal.apply { add(Calendar.DATE, 2) }.time,
-                        cal.apply { add(Calendar.HOUR, 24) }.time
-                ),
-                TextScheduleItem(
-                        "Fill Item",
-                        cal.apply { add(Calendar.HOUR, 2) }.time,
-                        cal.apply { add(Calendar.HOUR, 4) }.time,
-                        isFill = true,
-                ),
-                CurrentTimeScheduleItem.now(),
+            *days.toTypedArray(),
+            TextScheduleItem(
+                "text-000",
+                cal.time,
+                cal.apply { add(Calendar.HOUR, 1) }.time,
+            ),
+            TextScheduleItem(
+                "text-001",
+                cal.apply { add(Calendar.HOUR, 1) }.time,
+                cal.apply { add(Calendar.HOUR, 1) }.time
+            ),
+            TextScheduleItem(
+                "text-002",
+                cal.apply { add(Calendar.DATE, 1) }.time,
+                cal.apply { add(Calendar.HOUR, 4) }.time
+            ),
+            TextScheduleItem(
+                "text-003",
+                cal.apply { add(Calendar.DATE, 1) }.time,
+                cal.apply { add(Calendar.HOUR, 1) }.time
+            ),
+            TextScheduleItem(
+                "text-004",
+                cal.apply { add(Calendar.DATE, 2) }.time,
+                cal.apply { add(Calendar.HOUR, 24) }.time
+            ),
+            TextScheduleItem(
+                "Fill Item",
+                cal.apply { add(Calendar.HOUR, 2) }.time,
+                cal.apply { add(Calendar.HOUR, 4) }.time,
+                isFill = true,
+            ),
+            CurrentTimeScheduleItem.now(),
         )
 
-        val touchHelper = ScheduleCalendarItemTouchHelper(object : ScheduleCalendarItemTouchHelper.Callback() {
-            override fun isEditable(viewHolder: RecyclerView.ViewHolder): Boolean {
-                return viewHolder is TextScheduleAdapter.ViewHolder
-            }
+        val touchHelper =
+            ScheduleCalendarItemTouchHelper(object : ScheduleCalendarItemTouchHelper.Callback() {
+                override fun isEditable(viewHolder: RecyclerView.ViewHolder): Boolean {
+                    return viewHolder is TextScheduleAdapter.ViewHolder
+                }
 
-            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, start: Date, end: Date): Boolean {
-                adapter.updateItem(viewHolder.adapterPosition, start, end)
-                return true
-            }
+                override fun onMove(
+                    recyclerView: RecyclerView,
+                    viewHolder: RecyclerView.ViewHolder,
+                    start: Date,
+                    end: Date
+                ): Boolean {
+                    adapter.updateItem(viewHolder.adapterPosition, start, end)
+                    return true
+                }
 
-            override fun getScheduleItem(position: Int): ScheduleItem? {
-                return adapter.getItem(position)
-            }
+                override fun getScheduleItem(position: Int): ScheduleItem? {
+                    return adapter.getItem(position)
+                }
 
-            override fun onSelectionFinished(adapterPosition: Int, prev: ScheduleItem?) {
-                val view: View = findViewById(R.id.recycler_view)
-                if (adapter.getItem(adapterPosition) != prev) {
-                    Snackbar.make(view, R.string.snackbar_selection_finished, Snackbar.LENGTH_LONG)
+                override fun onSelectionFinished(adapterPosition: Int, prev: ScheduleItem?) {
+                    val view: View = findViewById(R.id.recycler_view)
+                    if (adapter.getItem(adapterPosition) != prev) {
+                        Snackbar.make(
+                            view,
+                            R.string.snackbar_selection_finished,
+                            Snackbar.LENGTH_LONG
+                        )
                             .let {
                                 prev?.let { before ->
                                     it.setAction(R.string.snackbar_action_recover) {
-                                        adapter.updateItem(adapterPosition, before.start(), before.end())
+                                        adapter.updateItem(
+                                            adapterPosition,
+                                            before.start(),
+                                            before.end()
+                                        )
                                     }
                                 } ?: it
                             }
                             .show()
+                    }
                 }
-            }
-        })
+            })
         touchHelper.attachToRecyclerView(recyclerView)
     }
 
-    data class TextScheduleItem(val text: String, val start: Date, val end: Date, private var origin: ScheduleItem? = null, private val isFill: Boolean = false) : ScheduleItem {
+    data class TextScheduleItem(
+        val text: String,
+        val start: Date,
+        val end: Date,
+        private var origin: ScheduleItem? = null,
+        private val isFill: Boolean = false
+    ) : ScheduleItem {
 
         override fun key(): String {
             return text
@@ -153,15 +173,17 @@ class MainActivity : AppCompatActivity() {
 
     class TextScheduleAdapter() : ScheduleCalendarAdapter() {
 
-        override fun createScheduleViewHolder(parent: ViewGroup): ScheduleCalendarAdapter.ViewHolder {
+        override fun createScheduleViewHolder(
+            viewType: Int,
+            parent: ViewGroup
+        ): ScheduleCalendarAdapter.ViewHolder {
             return ViewHolder(TextView(parent.context).apply {
                 setBackgroundResource(R.drawable.bg_text_item)
                 setPadding(8, 8, 8, 8)
             })
         }
 
-        class ViewHolder(itemView: View) :
-                ScheduleCalendarAdapter.ViewHolder(itemView) {
+        class ViewHolder(itemView: View) : ScheduleCalendarAdapter.ViewHolder(itemView) {
 
             override fun bind(item: ScheduleItem) {
                 if (itemView is TextView) {
@@ -182,10 +204,10 @@ class MainActivity : AppCompatActivity() {
         override fun onFirstItemChanged(position: Int, date: Date) {
             val monthTextView: TextView = findViewById(R.id.month_text)
             monthTextView.text = Calendar.getInstance().apply { time = date }
-                    .let {
-                        "${it.get(Calendar.YEAR)}." +
-                                it.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault())
-                    }
+                .let {
+                    "${it.get(Calendar.YEAR)}." +
+                            it.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault())
+                }
         }
     }
 

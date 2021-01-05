@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.library'
     id 'kotlin-android'
+    id 'com.github.panpf.bintray-publish'
 }
 
 android {
@@ -29,6 +30,16 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+}
+
+publish {
+    userOrg = "${library_user_org}"
+    groupId = "${library_group_name}"
+    artifactId = "${library_id}"
+    publishVersion = "${library_version}"
+    desc = 'Schedule calendar view libary for Android'
+    website = "${library_web_site}"
+    repoName = "${library_repo_name}"
 }
 
 dependencies {

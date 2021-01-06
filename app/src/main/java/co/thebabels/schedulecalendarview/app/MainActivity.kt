@@ -115,7 +115,7 @@ class MainActivity : AppCompatActivity() {
                         deleteButton.isEnabled = true
                     }
 
-                    override fun onSelectionFinished(adapterPosition: Int?, prev: ScheduleItem?) {
+                    override fun onSelectionFinished(adapterPosition: Int?, prev: ScheduleItem?, requestCode: Int?) {
                         val view: View = findViewById(R.id.recycler_view)
                         if (adapterPosition != null && adapter.getItem(adapterPosition) != prev) {
                             Snackbar.make(

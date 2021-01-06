@@ -403,6 +403,16 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
         outPosition[1] = selectedStartY + dy - (selected?.itemView?.top ?: 0)
     }
 
+    /**
+     * Clear selection.
+     *
+     * @param requestCode code that is passed to [Callback.onSelectionFinished].
+     */
+    fun clearSelection(requestCode: Int?) {
+        select(null, ACTION_STATE_IDLE, requestCode)
+    }
+
+
     override fun onDraw(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
         // we don't know if RV changed something so we should invalidate this index.
 //        mOverdrawChildPosition = -1
@@ -434,7 +444,7 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
      * current action, but may not be null if actionState is ACTION_STATE_DRAG.
      * @param actionState The type of action
      */
-    fun select(selected: RecyclerView.ViewHolder?, actionState: Int) {
+    fun select(selected: RecyclerView.ViewHolder?, actionState: Int, requestCode: Int? = null) {
         Log.d(TAG, "select: selected='${selected}', actionState='${actionState}'")
         if (selected === this.selected && actionState == this.actionState) {
             return
@@ -514,7 +524,7 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
                 rv.start()
                 preventLayout = true
                 if (changeSelection) {
-                    callback.onSelectionFinished(prevSelected)
+                    callback.onSelectionFinished(prevSelected, requestCode)
                 }
             } else {
                 // TODO
@@ -850,8 +860,9 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
          * @param adapterPosition adapter position of the view holder.
          * This can be null if item is deleted.
          * @param prev previous state of the item at the start of selection.
+         * @param requestCode code passed from [clearSelection].
          */
-        open fun onSelectionFinished(adapterPosition: Int?, prev: ScheduleItem?) {}
+        open fun onSelectionFinished(adapterPosition: Int?, prev: ScheduleItem?, requestCode: Int?) {}
 
         /**
          * Override to create a new schedule item when user touches empty space.
@@ -1236,12 +1247,12 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
         /**
          * Called when item selection is finished.
          */
-        fun onSelectionFinished(holder: RecyclerView.ViewHolder) {
+        fun onSelectionFinished(holder: RecyclerView.ViewHolder, requestCode: Int?) {
             val prevItem = this.selectedItem
             // item may be deleted if key is different from selected item.
             val mayBeDeleted = getScheduleItem(holder.adapterPosition)
                     ?.let { it.key() != prevItem?.key() } ?: true
-            onSelectionFinished(if (mayBeDeleted) null else holder.adapterPosition, prevItem)
+            onSelectionFinished(if (mayBeDeleted) null else holder.adapterPosition, prevItem, requestCode)
             this.selectedItem = null
         }
     }

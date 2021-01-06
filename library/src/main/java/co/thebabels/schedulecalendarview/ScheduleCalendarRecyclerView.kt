@@ -30,7 +30,6 @@ class ScheduleCalendarRecyclerView @JvmOverloads constructor(
     private var subColumnMargin = 0
 
     init {
-        overScrollMode
         // set up attrs
         context.theme.obtainStyledAttributes(
                 attributeSet,

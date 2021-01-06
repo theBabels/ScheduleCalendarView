@@ -251,6 +251,7 @@ class MainActivity : AppCompatActivity() {
     private inner class ScrollListener : RecyclerView.OnScrollListener() {
 
         override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+            Log.d("onScrolled", "${recyclerView.computeVerticalScrollOffset()}/${recyclerView.computeVerticalScrollRange()}(${recyclerView.computeVerticalScrollExtent()})")
             // add date label items for infinity scroll.
             if (!recyclerView.isComputingLayout) {
                 recyclerView.layoutManager?.let { lm ->

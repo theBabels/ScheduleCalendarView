@@ -17,7 +17,9 @@ internal class ItemTouchUIUtilImpl : ItemTouchUIUtil {
                 var originalElevation = view.getTag(R.id.item_touch_helper_previous_elevation)
                 if (originalElevation == null) {
                     originalElevation = ViewCompat.getElevation(view)
-                    val newElevation: Float = 1f + findMaxElevation(recyclerView, view)
+                    val newElevation =
+                            findHeaderElevation(view)?.let { it - 1f }
+                                    ?: findMaxElevation(recyclerView, view) + 1f
                     ViewCompat.setElevation(view, newElevation)
                     view.setTag(R.id.item_touch_helper_previous_elevation, originalElevation)
                 }
@@ -66,16 +68,21 @@ internal class ItemTouchUIUtilImpl : ItemTouchUIUtil {
 
     companion object {
         val INSTANCE: ItemTouchUIUtil = ItemTouchUIUtilImpl()
+
+        private fun findHeaderElevation(itemView: View): Float? {
+            val lp = itemView.layoutParams
+            if (lp is ScheduleCalendarLayoutManager.LayoutParams) {
+                return lp.headerElevation.toFloat()
+            }
+            return null
+        }
+
         private fun findMaxElevation(recyclerView: RecyclerView, itemView: View): Float {
             val childCount = recyclerView.childCount
             var max = 0f
             for (i in 0 until childCount) {
                 val child = recyclerView.getChildAt(i)
                 if (child === itemView) {
-                    continue
-                }
-                val lp = child.layoutParams
-                if (lp is ScheduleCalendarLayoutManager.LayoutParams && lp.isDateLabel) {
                     continue
                 }
                 val elevation = ViewCompat.getElevation(child)

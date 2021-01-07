@@ -11,6 +11,7 @@
         <item name="currentTimeHeight">8dp</item>
         <item name="itemRightPadding">6dp</item>
         <item name="subColumnMargin">1dp</item>
+        <item name="headerElevation">8dp</item>
     </style>
 
     <style name="ScheduleCalendarViewWidget.DateLabel">
@@ -32,5 +33,9 @@
 
     <style name="ScheduleCalendarViewWidget.CurrentTimeView">
         <item name="lineColor">?attr/colorPrimary</item>
+    </style>
+
+    <style name="ScheduleCalendarViewWidget.CalendarHeaderView">
+        <item name="backgroundColor">?attr/colorSurface</item>
     </style>
 </resources>

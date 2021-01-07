@@ -16,8 +16,9 @@ abstract class ScheduleCalendarAdapter() :
     companion object {
         const val TAG = "SCAdapter"
         const val ViewTypeTimeScale = 100
-        const val ViewTypeDateLabel = 101
-        const val ViewTypeCurrentTime = 102
+        const val ViewTypeHeader = 101
+        const val ViewTypeDateLabel = 102
+        const val ViewTypeCurrentTime = 103
         const val ViewTypeSchedule = 110
 
         const val PayloadMove = "Move"
@@ -344,6 +345,7 @@ abstract class ScheduleCalendarAdapter() :
     ): ViewHolder {
         return when (viewType) {
             ViewTypeTimeScale -> TimeScaleViewHolder(TimeScaleView(parent.context))
+            ViewTypeHeader -> CalendarHeaderViewHolder(CalendarHeaderView(parent.context))
             ViewTypeDateLabel -> DateLabelViewHolder(DateLabelView(parent.context))
             ViewTypeCurrentTime -> CurrentTimeViewHolder(CurrentTimeView(parent.context))
             else -> createScheduleViewHolder(viewType, parent)
@@ -369,7 +371,8 @@ abstract class ScheduleCalendarAdapter() :
 
     override fun getItemViewType(position: Int): Int {
         return when (position) {
-            items.size -> ViewTypeTimeScale
+            items.size + 1 -> ViewTypeTimeScale
+            items.size -> ViewTypeHeader
             else -> {
                 val item = items.getOrNull(position)
                 when {

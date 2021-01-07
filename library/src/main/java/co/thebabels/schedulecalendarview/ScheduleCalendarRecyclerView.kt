@@ -28,6 +28,7 @@ class ScheduleCalendarRecyclerView @JvmOverloads constructor(
     private var currentTimeHeight = 0
     private var itemRightPadding = 0
     private var subColumnMargin = 0
+    private var headerElevation = 0
 
     init {
         // set up attrs
@@ -46,6 +47,7 @@ class ScheduleCalendarRecyclerView @JvmOverloads constructor(
                 currentTimeHeight = getDimensionPixelSize(R.styleable.ScheduleCalendarRecyclerView_currentTimeHeight, 0)
                 itemRightPadding = getDimensionPixelSize(R.styleable.ScheduleCalendarRecyclerView_itemRightPadding, 0)
                 subColumnMargin = getDimensionPixelSize(R.styleable.ScheduleCalendarRecyclerView_subColumnMargin, 0)
+                headerElevation = getDimensionPixelSize(R.styleable.ScheduleCalendarRecyclerView_headerElevation, 0)
             } finally {
                 recycle()
             }
@@ -63,6 +65,7 @@ class ScheduleCalendarRecyclerView @JvmOverloads constructor(
             layout.currentTimeHeight = this.currentTimeHeight
             layout.itemRightPadding = this.itemRightPadding
             layout.subColumnMargin = this.subColumnMargin
+            layout.headerElevation = this.headerElevation
         }
     }
 

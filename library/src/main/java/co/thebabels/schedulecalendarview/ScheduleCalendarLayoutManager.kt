@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.SmoothScroller.ScrollVectorProvider
 import co.thebabels.schedulecalendarview.extention.*
+import co.thebabels.schedulecalendarview.view.CalendarHeaderView
 import co.thebabels.schedulecalendarview.view.TimeScaleView
 import java.util.*
 import kotlin.math.max
@@ -40,6 +41,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     var currentTimeHeight = 0
     var itemRightPadding = 0
     var subColumnMargin = 0
+    var headerElevation = 0
     private lateinit var dateLookUp: DateLookUp
     private var listener: Listener? = null
     private var firstVisibleItemPosition: Int = -1
@@ -206,8 +208,10 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
                     break
                 }
             }
-            // add TimeScaleView
-            addChild(itemCount - 1, recycler, getFirstDateLabel())
+            // add fix views
+            for (i in itemCount - FIX_VIEW_OFFSET until itemCount) {
+                addChild(i, recycler, getFirstDateLabel())
+            }
             // notify listener
             getFirstItemDate()?.let {
                 listener?.onFirstItemChanged(firstVisibleItemPosition, it)
@@ -247,7 +251,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             }
         }
 
-        when (position - (itemCount - 1)) {
+        when ((itemCount - 1) - position) {
             0 -> {
                 // the last item is 'TimeScaleView'.
                 // assign date to layout param
@@ -270,6 +274,19 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
 
                 // execute layout
                 layoutDecoratedWithMargins(v, left, top, right, bottom)
+            }
+            1 -> {
+                // the second view from the end is 'HeaderView'
+                val lp = assignDate(v, position)
+                lp.isHeader = true
+                lp.width = width
+                lp.height = headerOffset()
+                v.layoutParams = lp
+                lp.calcElevation()?.let { v.elevation = it }
+
+                // measure child
+                measureChild(v, 0, 0)
+                layoutDecoratedWithMargins(v, 0, 0, getDecoratedMeasuredWidth(v), getDecoratedMeasuredHeight(v))
             }
             else -> {
                 layoutScheduleItem(v, position, anchorDateLabel)
@@ -420,6 +437,9 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         lp.width = lp.calcWidth()
         measureChild(view, 0, 0)
 
+        // set elevation
+        lp.calcElevation()?.let { view.elevation = it }
+
         // calculate layout position based on first
         val isFirstDateLabelInitialization = anchorDateLabel == null
         if (isFirstDateLabelInitialization) {
@@ -462,9 +482,12 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         lp.dateLabelHeight = dateLabelHeight
         lp.rowHeight = rowHeight
         lp.columnWidth = rowWidth()
+        lp.timeScaleWidth = timeScaleWidth
+        lp.headerElevation = headerElevation
         lp.itemRightPadding = itemRightPadding
         lp.isDateLabel = dateLookUp.isDateLabel(position)
         lp.isCurrentTime = dateLookUp.isCurrentTime(position)
+        lp.isHeader = false
         lp.currentTimeHeight = currentTimeHeight
         lp.start = dateLookUp.lookUpStart(position)
         lp.end = dateLookUp.lookUpEnd(position)
@@ -551,9 +574,22 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     }
 
     private fun getTimeScale(): View? {
-        return getChildAt(childCount - 1)?.let {
-            if (it is TimeScaleView) it else null
+        return findFixView { it is TimeScaleView }
+    }
+
+    private fun getCalendarHeader(): View? {
+        return findFixView { it is CalendarHeaderView }
+    }
+
+    private fun findFixView(f: (View) -> Boolean): View? {
+        for (i in childCount - 1 downTo childCount - 1 - FIX_VIEW_OFFSET) {
+            getChildAt(i)?.let {
+                if (f(it)) {
+                    return it
+                }
+            }
         }
+        return null
     }
 
     private fun getFirstDateLabel(): View? {
@@ -572,11 +608,14 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     }
 
     private fun fixViewCount(): Int {
-        return if (getChildAt(childCount - 1) is TimeScaleView) {
-            1
-        } else {
-            0
+        var count = 0
+        if (getTimeScale() != null) {
+            count += 1
         }
+        if (getCalendarHeader() != null) {
+            count += 1
+        }
+        return count
     }
 
     /**
@@ -600,8 +639,11 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         var currentTimeHeight = 0
         var rowHeight: Float = 0f
         var columnWidth: Int = 0
+        var timeScaleWidth: Int = 0
+        var headerElevation: Int = 0
         var isDateLabel: Boolean = false
         var isCurrentTime: Boolean = false
+        var isHeader: Boolean = false
         var isFillItem: Boolean = false
         var itemRightPadding = 0
         var subColumnMargin = 0
@@ -627,6 +669,16 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         constructor(source: ViewGroup.LayoutParams?) : super(source)
 
         constructor(source: RecyclerView.LayoutParams?) : super(source as ViewGroup.LayoutParams?)
+
+        fun calcElevation(): Float? {
+            return if (isHeader) {
+                headerElevation.toFloat()
+            } else if (isDateLabel) {
+                headerElevation + 1f
+            } else {
+                null
+            }
+        }
 
         fun calcHeight(): Int {
             return if (isDateLabel) {

@@ -13,6 +13,7 @@
         <attr name="currentTimeHeight" format="dimension|reference" />
         <attr name="itemRightPadding" format="dimension|reference" />
         <attr name="subColumnMargin" format="dimension|reference" />
+        <attr name="headerElevation" format="dimension|reference" />
     </declare-styleable>
     <declare-styleable name="DateLabelView" parent="ScheduleCalendarViewBase">
         <attr name="dayOfWeekTextColor" format="color|reference" />
@@ -24,11 +25,13 @@
         <attr name="todayCirclePadding" format="dimension|reference" />
     </declare-styleable>
     <declare-styleable name="TimeScaleView" parent="ScheduleCalendarViewBase" />
+    <declare-styleable name="CalendarHeaderView" parent="ScheduleCalendarViewBase" />
     <declare-styleable name="CurrentTimeView" parent="ScheduleCalendarViewBase">
         <attr name="lineColor" format="color|reference" />
     </declare-styleable>
     <attr name="scv_rowHeight" format="dimension|reference" />
     <attr name="dateLabelView" format="reference" />
     <attr name="timeScaleView" format="reference" />
+    <attr name="calendarHeaderView" format="reference" />
     <attr name="currentTimeView" format="reference" />
 </resources>

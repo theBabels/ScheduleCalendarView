@@ -31,8 +31,8 @@ class MainActivity : AppCompatActivity() {
                 }
         recyclerView.adapter = adapter
         recyclerView.addOnScrollListener(scrollListener)
-//        val snapHelper = PagerSnapHelper()
-//        snapHelper.attachToRecyclerView(recyclerView)
+        val snapHelper = ScheduleCalendarSnapHelper()
+        snapHelper.attachToRecyclerView(recyclerView)
 
         val todayButton: Button = findViewById(R.id.today_btn)
         todayButton.setOnClickListener {
@@ -53,7 +53,6 @@ class MainActivity : AppCompatActivity() {
             set(Calendar.MILLISECOND, 0)
         }
         val days = DateScheduleItem.firstDayOfWeek().nextDays(90, true)
-        Log.d("DEBUG", "${days.map { it.dateString() }}")
         adapter.addItems(
                 *days.toTypedArray(),
                 TextScheduleItem(

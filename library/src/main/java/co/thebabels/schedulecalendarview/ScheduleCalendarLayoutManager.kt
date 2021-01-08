@@ -15,6 +15,7 @@ import co.thebabels.schedulecalendarview.view.CalendarHeaderMaskView
 import co.thebabels.schedulecalendarview.view.CalendarHeaderView
 import co.thebabels.schedulecalendarview.view.TimeScaleView
 import java.util.*
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -343,6 +344,11 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             recycler: RecyclerView.Recycler?,
             state: RecyclerView.State?
     ): Int {
+        //　limits the scrolling to either vertical or horizontal at the same time.
+        // FIXME this may have undesirable side effects on the scrolling process by SmoothScrollTo and SmoothScroller.
+        if (state != null && abs(state.remainingScrollVertical) < abs(state.remainingScrollHorizontal)) {
+            return 0
+        }
         // get 'TimeScaleView'
         val timeScaleView = getTimeScale() ?: return 0
         val timeScaleTop = getDecoratedTop(timeScaleView)
@@ -397,6 +403,11 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             recycler: RecyclerView.Recycler?,
             state: RecyclerView.State?
     ): Int {
+        //　limits the scrolling to either vertical or horizontal at the same time.
+        // FIXME this may have undesirable side effects on the scrolling process by SmoothScrollTo and SmoothScroller.
+        if (state != null && abs(state.remainingScrollVertical) > abs(state.remainingScrollHorizontal)) {
+            return 0
+        }
         // first child of 'DateLabelView'
         val firstView = getFirstDateLabel() ?: return 0
         val lastItem = getChildAt(childCount - 1 - fixViewCount())

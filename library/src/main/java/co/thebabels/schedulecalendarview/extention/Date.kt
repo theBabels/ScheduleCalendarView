@@ -40,6 +40,10 @@ fun Date.hourOfDay(): Float {
     }
 }
 
+fun Date.dayOfWeek(): Int {
+    return toCalendar().get(Calendar.DAY_OF_WEEK)
+}
+
 /**
  * Returns true if this [Date] is same day with given date as [now].
  */

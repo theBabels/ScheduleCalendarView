@@ -25,11 +25,12 @@ data class DateScheduleItem(private val cal: Calendar, private var origin: Sched
          * Returns a new [DateScheduleItem] of the first day of the week on a given [date].
          *
          * @param date the base date. if null, the current time is used.
+         * @param startDayOfWeek the first day of the week. default is [Calendar.MONDAY].
          */
-        fun firstDayOfWeek(date: Date? = null): DateScheduleItem {
+        fun firstDayOfWeek(date: Date? = null, startDayOfWeek: Int = Calendar.MONDAY): DateScheduleItem {
             val cal = Calendar.getInstance()
             date?.let { cal.time = it }
-            cal.add(Calendar.DAY_OF_MONTH, Calendar.MONDAY - cal.get(Calendar.DAY_OF_WEEK));
+            cal.add(Calendar.DAY_OF_MONTH, (startDayOfWeek - cal.get(Calendar.DAY_OF_WEEK)).let { if (it > 0) it - 7 else it });
             return DateScheduleItem(cal)
         }
     }

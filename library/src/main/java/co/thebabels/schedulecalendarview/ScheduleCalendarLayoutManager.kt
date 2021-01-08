@@ -2,7 +2,6 @@ package co.thebabels.schedulecalendarview
 
 import android.content.Context
 import android.graphics.PointF
-import android.text.style.TtsSpan
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
@@ -12,6 +11,7 @@ import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.SmoothScroller.ScrollVectorProvider
 import co.thebabels.schedulecalendarview.extention.*
+import co.thebabels.schedulecalendarview.view.CalendarHeaderMaskView
 import co.thebabels.schedulecalendarview.view.CalendarHeaderView
 import co.thebabels.schedulecalendarview.view.TimeScaleView
 import java.util.*
@@ -280,6 +280,19 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
                 val lp = assignDate(v, position)
                 lp.isHeader = true
                 lp.width = width
+                lp.height = headerOffset()
+                v.layoutParams = lp
+                lp.calcElevation()?.let { v.elevation = it }
+
+                // measure child
+                measureChild(v, 0, 0)
+                layoutDecoratedWithMargins(v, 0, 0, getDecoratedMeasuredWidth(v), getDecoratedMeasuredHeight(v))
+            }
+            2 -> {
+                // the third view from the end is 'HeaderMaskView'
+                val lp = assignDate(v, position)
+                lp.isHeaderMask = true
+                lp.width = lp.timeScaleWidth
                 lp.height = headerOffset()
                 v.layoutParams = lp
                 lp.calcElevation()?.let { v.elevation = it }
@@ -581,6 +594,10 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         return findFixView { it is CalendarHeaderView }
     }
 
+    private fun getCalendarHeaderMaskView(): View? {
+        return findFixView { it is CalendarHeaderMaskView }
+    }
+
     private fun findFixView(f: (View) -> Boolean): View? {
         for (i in childCount - 1 downTo childCount - 1 - FIX_VIEW_OFFSET) {
             getChildAt(i)?.let {
@@ -615,6 +632,9 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         if (getCalendarHeader() != null) {
             count += 1
         }
+        if (getCalendarHeaderMaskView() != null) {
+            count += 1
+        }
         return count
     }
 
@@ -644,6 +664,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         var isDateLabel: Boolean = false
         var isCurrentTime: Boolean = false
         var isHeader: Boolean = false
+        var isHeaderMask: Boolean = false
         var isFillItem: Boolean = false
         var itemRightPadding = 0
         var subColumnMargin = 0
@@ -673,7 +694,7 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         fun calcElevation(): Float? {
             return if (isHeader) {
                 headerElevation.toFloat()
-            } else if (isDateLabel) {
+            } else if (isDateLabel || isHeaderMask) {
                 headerElevation + 1f
             } else {
                 null

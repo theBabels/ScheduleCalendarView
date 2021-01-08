@@ -80,8 +80,14 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
 
     /**
      * Return date at given position.
+     *
+     * @param x x position in recycler view
+     * @param y y position in recycler view
+     * @param minuteSpan span of minute
+     * @param allowOverflowFromTimeScale when false is set, if the y position is out of the time scale,
+     *  it will be corrected to fit into the position at the edge of the scale.
      */
-    fun getDateAt(x: Int, y: Int, minuteSpan: Int = 1): Date? {
+    fun getDateAt(x: Int, y: Int, minuteSpan: Int = 1, allowOverflowFromTimeScale: Boolean = true): Date? {
         val firstDateLabel = getFirstDateLabel() ?: return null
         val firstDateLabelLP = firstDateLabel.layoutParams as LayoutParams
         val firstDateLabelLeft = getDecoratedLeft(firstDateLabel)
@@ -103,6 +109,10 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             } else {
                 min + minuteSpan - minSurplus
             }
+        }.let {
+            if (!allowOverflowFromTimeScale) {
+                max(0, min(24 * 60, it))
+            } else it
         }
         cal.add(Calendar.MINUTE, minute)
 
@@ -146,9 +156,9 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         val timeScale = getTimeScale() ?: return null
         val verticalSpan = rowHeight * minuteSpan / 60f
         val minSpanDiff = ((y - getDecoratedTop(timeScale)) / verticalSpan).toInt()
-        val timeScaleTop = getDecoratedTop(timeScale)
+        val timeScaleTop = getDecoratedTop(timeScale).toFloat()
         val positionY = timeScaleTop + minSpanDiff * verticalSpan
-        return if (allowNegative) positionY else max(positionY, timeScaleTop.toFloat())
+        return if (allowNegative) positionY else max(positionY, timeScaleTop)
     }
 
     internal fun getFirstDateLabelX(): Float? {

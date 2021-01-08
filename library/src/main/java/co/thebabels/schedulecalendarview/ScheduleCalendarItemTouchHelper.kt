@@ -696,7 +696,7 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
                 val x = selectedStartX.toInt()
                 val y = (selectedStartY + dy).toInt()
                 val end = lp.end ?: return
-                val start = lm.getDateAt(x, y, callback.minuteSpan())?.let {
+                val start = lm.getDateAt(x, y, callback.minuteSpan(), allowOverflowFromTimeScale = false)?.let {
                     if (it.before(end)) it else end
                 } ?: return
 
@@ -820,13 +820,15 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
                         ?: return
         val x = ev.getX(pointerIndex)
         val tmpDy = ev.getY(pointerIndex) - initialTouchY
+        // Calculate 'dx' and 'dy' so that the selected position is placed at the valid position on the time scale.
         dx = lm.getValidPositionX(x)?.let { it - selectedStartX } ?: return
         dy = if (!lp.isStartSplit || !lp.isEndSplit) {
-            lm.getValidPositionY(selectedStartY + tmpDy, callback.minuteSpan(), actionState == ACTION_STATE_DRAG)
-                    ?.let { it - selectedStartY }
+            val selectedY = if (actionState == ACTION_STATE_DRAG_END) selectedEndY else selectedStartY
+            lm.getValidPositionY(selectedY + tmpDy, callback.minuteSpan(), actionState == ACTION_STATE_DRAG)
+                    ?.let { it - selectedY }
                     ?: return
         } else 0f
-        Log.d(TAG, "updateDxDy: dx='${dx}', dy='${dy}'")
+        Log.v(TAG, "updateDxDy: dx='${dx}', dy='${dy}'")
     }
 
     /**

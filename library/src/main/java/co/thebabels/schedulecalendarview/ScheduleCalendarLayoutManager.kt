@@ -137,12 +137,18 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     /**
      * Returns the closest y position from the specified [y] position
      * that is suitable for placing the item.
+     *
+     * @param y y position in recycler view
+     * @param minuteSpan span of minute
+     * @param allowNegative If false, this method will not return values before midnight.
      */
-    fun getValidPositionY(y: Float, minuteSpan: Int): Float? {
+    fun getValidPositionY(y: Float, minuteSpan: Int, allowNegative: Boolean = true): Float? {
         val timeScale = getTimeScale() ?: return null
         val verticalSpan = rowHeight * minuteSpan / 60f
         val minSpanDiff = ((y - getDecoratedTop(timeScale)) / verticalSpan).toInt()
-        return getDecoratedTop(timeScale) + minSpanDiff * verticalSpan
+        val timeScaleTop = getDecoratedTop(timeScale)
+        val positionY = timeScaleTop + minSpanDiff * verticalSpan
+        return if (allowNegative) positionY else max(positionY, timeScaleTop.toFloat())
     }
 
     internal fun getFirstDateLabelX(): Float? {

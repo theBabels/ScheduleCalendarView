@@ -822,7 +822,7 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
         val tmpDy = ev.getY(pointerIndex) - initialTouchY
         dx = lm.getValidPositionX(x)?.let { it - selectedStartX } ?: return
         dy = if (!lp.isStartSplit || !lp.isEndSplit) {
-            lm.getValidPositionY(selectedStartY + tmpDy, callback.minuteSpan())
+            lm.getValidPositionY(selectedStartY + tmpDy, callback.minuteSpan(), actionState == ACTION_STATE_DRAG)
                     ?.let { it - selectedStartY }
                     ?: return
         } else 0f

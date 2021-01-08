@@ -56,6 +56,8 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
 
         private const val ACTIVE_POINTER_ID_NONE = -1
 
+        private const val EdgeScrollRatio = 0.2f
+
         /**
          * Returns true given [x] and [y] is on the [child] view.
          *
@@ -575,7 +577,7 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
      * If user drags the view to the edge, trigger a scroll if necessary.
      */
     fun scrollIfNecessary(): Boolean {
-        if (selected == null || actionState != ACTION_STATE_DRAG) {
+        if (selected == null || (actionState != ACTION_STATE_DRAG && actionState != ACTION_STATE_DRAG_START && actionState != ACTION_STATE_DRAG_END)) {
             mDragScrollStartTimeInMs = Long.MIN_VALUE
             return false
         }
@@ -590,7 +592,7 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
         lm.calculateItemDecorationsForChild(selected.itemView, tmpRect)
         var scrollX = 0
         var scrollY = 0
-        if (lm.canScrollHorizontally()) {
+        if (lm.canScrollHorizontally() && actionState == ACTION_STATE_DRAG) {
             // prepare offset to determine that the selected position has reached the edge.
             // This offset is required because the dx can only be moved to the position of the currently displayed date in a calendar.
             val offset = selected.itemView.width
@@ -607,14 +609,18 @@ class ScheduleCalendarItemTouchHelper(val callback: Callback) : RecyclerView.Ite
             }
         }
         if (lm.canScrollVertically()) {
+            val recyclerHeight = recyclerView.height
+            val touchY = (initialTouchY + dy).toInt()
             val curY = (selectedStartY + dy).toInt()
-            val topDiff: Int = curY - tmpRect.top - recyclerView.getPaddingTop()
-            if (dy < 0 && topDiff < 0) {
-                scrollY = topDiff
+            if (dy < 0) {
+                val topDiff: Int = curY - tmpRect.top - recyclerView.paddingTop
+                if (touchY < recyclerHeight * EdgeScrollRatio && topDiff < 0) {
+                    scrollY = topDiff
+                }
             } else if (dy > 0) {
-                val bottomDiff: Int = (curY + selected.itemView.getHeight() + tmpRect.bottom
-                        - (recyclerView.getHeight() - recyclerView.getPaddingBottom()))
-                if (bottomDiff > 0) {
+                val bottomDiff: Int = (curY + selected.itemView.height + tmpRect.bottom
+                        - (recyclerHeight - recyclerView.paddingBottom))
+                if (touchY > recyclerHeight * (1 - EdgeScrollRatio) && bottomDiff > 0) {
                     scrollY = bottomDiff
                 }
             }

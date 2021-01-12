@@ -2,6 +2,8 @@ package co.thebabels.schedulecalendarview
 
 import android.content.Context
 import android.graphics.PointF
+import android.os.Parcel
+import android.os.Parcelable
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
@@ -47,6 +49,10 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
     private var listener: Listener? = null
     private var firstVisibleItemPosition: Int = -1
     private var lastVisibleItemPosition: Int = 0
+
+    // [Date.time] value of the item at [firstVisibleItemPosition].
+    // This is used to check if the items are not changed between save and restore the state of layout manager.
+    private var firstVisibleItemDate: Long? = null
 
     // These are scroll positions to be temporarily remembered during re-layout.
     private var tmpVerticalScroll: Int? = null
@@ -211,11 +217,28 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
             // save the current vertical scroll position until the re-layout is finished.
             tmpVerticalScroll = currentVerticalScroll()
             tmpFirstDateLabelPosition = getFirstDateLabelX()?.toInt()
-            Log.v(
-                    TAG,
-                    "onLayoutChildren: visiblePosition is updated: first='${firstVisibleItemPosition}', last='${lastVisibleItemPosition}', verticalScrollPosition='${tmpVerticalScroll}', tmpFirstDateLabelPosition='${tmpFirstDateLabelPosition}'"
-            )
+            Log.d(TAG, "onLayoutChildren: visiblePosition is updated: first='${firstVisibleItemPosition}', last='${lastVisibleItemPosition}', verticalScrollPosition='${tmpVerticalScroll}', tmpFirstDateLabelPosition='${tmpFirstDateLabelPosition}'")
         }
+
+        // validate params: Initialize the item positions and scroll positions if
+        // - the visible item positions are greater than the number of items
+        // - the date of item at [firstVisibleItemPosition] differs between the saved one and the current one.
+        // These can happen when the [LayoutManager] restored the position by [LayoutManager.onRestoreSavedState], but the [Adapter] did not restore the items.
+        val shouldInitLayoutPositions = firstVisibleItemPosition > itemCount ||
+                lastVisibleItemPosition > itemCount ||
+                (firstVisibleItemDate?.let { date ->
+                    dateLookUp.lookUpStart(firstVisibleItemPosition)?.time != date
+                } ?: false)
+        if (shouldInitLayoutPositions) {
+            Log.d(TAG, "onLayoutChildren: visible item position is fixed: first='${firstVisibleItemPosition}'->-1, last='${lastVisibleItemPosition}'->0, firstDate='${firstVisibleItemDate}'")
+            firstVisibleItemPosition = -1
+            lastVisibleItemPosition = 0
+            tmpVerticalScroll = null
+            tmpFirstDateLabelPosition = null
+        }
+        firstVisibleItemDate = null
+
+
         recycler?.let {
             detachAndScrapAttachedViews(it)
             for (i in max(firstVisibleItemPosition, 0) until itemCount - FIX_VIEW_OFFSET) {
@@ -355,11 +378,6 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         val timeScaleBottom = getDecoratedBottom(timeScaleView)
         val scrollAmount = calculateVerticalScrollAmount(dy, timeScaleTop, timeScaleBottom)
 
-        Log.v(
-                TAG,
-                "scrollVerticallyBy: dy='${dy}',scrollAmount='${scrollAmount}'(timeScaleTop='${timeScaleTop}',timeScaleBottom='${timeScaleBottom}, height='${height}'')"
-        )
-
         offsetChildrenVertical(-scrollAmount)
 
         return scrollAmount
@@ -416,10 +434,6 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         val scrollAmount = calculateHorizontalScrollAmount(dx, firstLeft, lastRight)
 
         val lastItemName = if (lastItem == null) "null" else lastItem::class.java.name
-        Log.v(
-                TAG,
-                "scrollHorizontallyBy:${lastScheduleItemAdapterPosition} dx='${dx}' scrollAmount='${scrollAmount}'(firstLeft='${firstLeft}', lastRight='${lastRight}'${lastItemName})"
-        )
 
         // add & remove new views TODO
         if (dx > 0) { // scroll to right
@@ -515,6 +529,29 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
 
         // execute layout
         layoutDecoratedWithMargins(view, left, top, right, bottom)
+    }
+
+
+    override fun onSaveInstanceState(): Parcelable? {
+
+        return SavedState(
+                currentVerticalScroll(),
+                getFirstDateLabel()?.x?.toInt() ?: 0,
+                firstVisibleItemPosition,
+                lastVisibleItemPosition,
+                dateLookUp.lookUpStart(firstVisibleItemPosition)?.time ?: 0,
+        )
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        if (state is SavedState) {
+            tmpVerticalScroll = state.verticalScrollPosition
+            tmpFirstDateLabelPosition = state.firstDateLabelPosition
+            firstVisibleItemPosition = state.firstVisibleItemPosition
+            lastVisibleItemPosition = state.lastVisibleItemPosition
+            firstVisibleItemDate = state.firstVisibleItemDate
+        }
+        super.onRestoreInstanceState(state)
     }
 
     private fun assignDate(view: View, position: Int): LayoutParams {
@@ -802,5 +839,43 @@ class ScheduleCalendarLayoutManager(context: Context) : RecyclerView.LayoutManag
         fun isStartSplit(position: Int): Boolean
         fun isEndSplit(position: Int): Boolean
         fun isFillItem(position: Int): Boolean
+    }
+
+    /**
+     * Saved state of the layout manager.
+     */
+    data class SavedState(
+            var verticalScrollPosition: Int,
+            var firstDateLabelPosition: Int,
+            var firstVisibleItemPosition: Int,
+            var lastVisibleItemPosition: Int,
+            var firstVisibleItemDate: Long,
+    ) : Parcelable {
+
+        companion object {
+            @JvmField
+            val CREATOR: Parcelable.Creator<SavedState> = object : Parcelable.Creator<SavedState> {
+
+                override fun createFromParcel(p: Parcel): SavedState? {
+                    return SavedState(p.readInt(), p.readInt(), p.readInt(), p.readInt(), p.readLong())
+                }
+
+                override fun newArray(size: Int): Array<SavedState?> {
+                    return arrayOfNulls(size)
+                }
+            }
+        }
+
+        override fun describeContents(): Int {
+            return 0
+        }
+
+        override fun writeToParcel(dest: Parcel?, flags: Int) {
+            dest?.writeInt(verticalScrollPosition)
+            dest?.writeInt(firstDateLabelPosition)
+            dest?.writeInt(firstVisibleItemPosition)
+            dest?.writeInt(lastVisibleItemPosition)
+            dest?.writeLong(firstVisibleItemDate)
+        }
     }
 }

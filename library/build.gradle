@@ -1,8 +1,18 @@
 plugins {
     id 'com.android.library'
     id 'kotlin-android'
-    id 'com.github.panpf.bintray-publish'
 }
+
+ext {
+    PUBLISH_GROUP_ID = 'io.github.thebabels'
+    PUBLISH_VERSION = '1.0.0'
+    PUBLISH_ARTIFACT_ID = 'schedule-calendar-view'
+}
+
+apply from: "${rootProject.projectDir}/scripts/publish-module.gradle"
+
+group = PUBLISH_GROUP_ID
+version = PUBLISH_VERSION
 
 android {
     compileSdkVersion 30
@@ -32,15 +42,15 @@ android {
     }
 }
 
-publish {
-    userOrg = "${library_user_org}"
-    groupId = "${library_group_name}"
-    artifactId = "${library_id}"
-    publishVersion = "${library_version}"
-    desc = 'Schedule calendar view libary for Android'
-    website = "${library_web_site}"
-    repoName = "${library_repo_name}"
-}
+//publish {
+//    userOrg = "${library_user_org}"
+//    groupId = "${library_group_name}"
+//    artifactId = "${library_id}"
+//    publishVersion = "${library_version}"
+//    desc = 'Schedule calendar view libary for Android'
+//    website = "${library_web_site}"
+//    repoName = "${library_repo_name}"
+//}
 
 dependencies {
 

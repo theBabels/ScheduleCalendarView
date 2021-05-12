@@ -1,5 +1,17 @@
-# ScheduleCalendarView
+ScheduleCalendarView
+---
 
+### Usage
+
+``` build.gradle
+    implementation 'io.github.thebabels:schedule-calendar-view:1.0.0'
+```
+
+### Deploy to Maven Central
+
+``` sh
+./gradlew uploadArchives
+```
 
 ### License
 
